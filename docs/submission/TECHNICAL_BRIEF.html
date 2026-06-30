@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: letter; margin: 13mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: #15171d; font-size: 10.1pt; line-height: 1.4; margin: 0; }
+  h1 { font-size: 21pt; margin: 0; letter-spacing: -0.5px; }
+  h1 .dot { color: #7c3aed; }
+  h2 { font-size: 11.5pt; margin: 15px 0 5px; padding-bottom: 3px; border-bottom: 2px solid #e7e9f0; color: #3b0a78; display: flex; align-items: center; gap: 7px; }
+  h2 .n { font-family: "SF Mono", Consolas, monospace; font-size: 8pt; background: #3b0a78; color: #fff; border-radius: 4px; padding: 1px 5px; }
+  .sub { color: #565c68; font-size: 9.6pt; margin: 3px 0 0; }
+  .right { float: right; text-align: right; color: #7a8088; font-size: 8.5pt; letter-spacing: 0.6px; }
+  .right b { color: #3b0a78; letter-spacing: 1px; }
+  .lead { font-size: 11pt; margin: 12px 0 6px; }
+  .links { font-family: "SF Mono", Consolas, monospace; font-size: 8.8pt; color: #565c68; margin: 4px 0 2px; }
+  .links b { color: #0a7ea4; }
+  .pill { display: inline-block; background: #f3eefe; color: #3b0a78; border: 1px solid #d9c9f7; border-radius: 10px; padding: 1px 8px; font-size: 8pt; font-weight: 600; margin-left: 4px; }
+  p { margin: 5px 0; }
+  code, .mono { font-family: "SF Mono", "Cascadia Code", Consolas, monospace; font-size: 8.6pt; background: #f2f4f8; padding: 1px 4px; border-radius: 3px; }
+  .accent { color: #3b0a78; font-weight: 700; }
+  ul { margin: 4px 0; padding-left: 17px; } li { margin: 2px 0; }
+  .diagram { font-family: "SF Mono", Consolas, monospace; font-size: 8.1pt; line-height: 1.3; background: #0a0a14; color: #d6def5; padding: 10px 12px; border-radius: 7px; white-space: pre; margin: 7px 0; }
+  .diagram b { color: #c4b5fd; }
+  .cards { display: flex; gap: 8px; margin: 7px 0; }
+  .card { flex: 1; border: 1px solid #dfe3ea; border-radius: 6px; padding: 7px 9px; font-size: 8.8pt; }
+  .card .tag { font-weight: 700; font-size: 7.6pt; letter-spacing: 0.5px; border-radius: 4px; padding: 1px 6px; }
+  .hi { background: #fde8ec; } .hi .tag { background: #e11d48; color: #fff; }
+  .me { background: #fef3da; } .me .tag { background: #d97706; color: #fff; }
+  .lo { background: #e3f2fb; } .lo .tag { background: #0a7ea4; color: #fff; }
+  .tags { margin: 6px 0; } .tags span { display: inline-block; background: #f2f4f8; border: 1px solid #e2e6ee; border-radius: 5px; padding: 1px 7px; font-size: 8pt; margin: 2px 3px 2px 0; font-family: "SF Mono", Consolas, monospace; }
+  .quote { border-left: 3px solid #7c3aed; background: #faf8ff; padding: 6px 10px; margin: 6px 0; font-size: 9pt; }
+  .quote .q { font-style: italic; color: #3b0a78; }
+  table { border-collapse: collapse; width: 100%; margin: 5px 0; font-size: 9pt; }
+  td { border: 1px solid #dfe3ea; padding: 4px 8px; vertical-align: top; }
+  td.k { background: #f6f4fc; font-weight: 600; width: 26%; }
+  .foot { margin-top: 12px; padding-top: 6px; border-top: 1px solid #e7e9f0; color: #565c68; font-size: 8.5pt; }
+  .ok { color: #137a3e; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="right"><b>JUDGES' TECHNICAL BRIEF</b><br>FutureAI Global Hackathon 2026 · ~3-min read</div>
+<h1>Plainspeak<span class="dot">.</span></h1>
+<p class="sub">AI that reads the fine print for you.<span class="pill">Generative AI · Social Impact</span></p>
+
+<p class="lead">Paste any dense document and get it back in <span class="accent">plain words</span>, the clauses that <span class="accent">affect you</span> ranked by severity, and the <span class="accent">questions to ask</span> before you sign.</p>
+<p class="links">LIVE <b>plainspeak-nine.vercel.app</b> &nbsp;·&nbsp; REPO <b>github.com/OrionArchitekton/plainspeak</b> (MIT) &nbsp;·&nbsp; VIDEO <b>youtu.be/EbHJ4gQpNS8</b></p>
+
+<h2><span class="n">01</span> The problem</h2>
+<p>Ordinary people sign leases, accept medical plans, and click <em>I agree</em> on terms they do not actually understand. The language is written to be understood by the party that wrote it, not the person it affects. That asymmetry quietly costs people money, rights, and peace of mind. Plainspeak closes the comprehension gap, and does it in a way that respects the reader: it tells you what affects <em>you</em>, not just a generic summary.</p>
+
+<h2><span class="n">02</span> How it works</h2>
+<p>One Next.js app, one server route, one structured model call. The Anthropic API key never reaches the browser; the model is constrained by a system prompt and a JSON contract, and the reply is parsed defensively so a malformed response degrades gracefully instead of crashing.</p>
+<div class="diagram">Browser  <b>Next.js 15 / React 19</b>
+   │  POST /api/explain  { document, readingLevel, situation }
+   ▼
+<b>Server route</b>  (nodejs runtime · key stays server-side · optional per-IP rate limit)
+   │  system prompt = persona + reading level + "not legal/medical advice" guardrail + JSON contract
+   ▼
+<b>Anthropic Claude</b>  claude-sonnet-4-6 · temperature 0  (deterministic, repeatable)
+   │  reply → defensive JSON parse (recovers code-fenced / messy) → sort clauses high→low
+   ▼
+<b>Three cards</b>  In plain words · What affects you (ranked) · Questions to ask</div>
+
+<h2><span class="n">03</span> The output that matters</h2>
+<p>Not a summary, three answers. The middle one is the differentiator: the specific clauses that affect the reader, ranked so the traps surface first.</p>
+<div class="cards">
+  <div class="card hi"><span class="tag">HIGH</span><br>Your $4,800 deposit is non-refundable if you leave before 12 months, even with no damage.</div>
+  <div class="card me"><span class="tag">MEDIUM</span><br>Rent can jump 12% at renewal with only 30 days' notice, less than the 60 you need to leave.</div>
+  <div class="card lo"><span class="tag">LOW</span><br>The landlord may enter with 24 hours' notice; the document never defines valid notice.</div>
+</div>
+<p>Then the exact questions to ask the landlord, clinician, or company, so the reader walks in informed instead of intimidated. Reading level is a control: <em>Like I'm 10</em>, <em>Plain English</em>, or <em>Full detail</em>.</p>
+
+<h2><span class="n">04</span> Safe and deterministic by construction</h2>
+<ul>
+  <li><span class="accent">Guardrail in the model's own instructions</span> — "never invent facts; this is not professional advice." The UI repeats it.</li>
+  <li><span class="accent">Temperature 0</span> — the same document yields the same explanation, every time.</li>
+  <li><span class="accent">No persistence</span> — documents are processed and returned, never stored. The only write is an optional rate-limit counter (IP + count), never content.</li>
+</ul>
+
+<h2><span class="n">05</span> Engineering rigor</h2>
+<p>The prompt-build and parse logic is a pure module, unit-tested without a network. The build is verified live, not just compiled, and every load-bearing claim survived an independent adversarial review before submission.</p>
+<div class="tags"><span>Next.js 15</span><span>React 19</span><span>TypeScript</span><span>Tailwind v4</span><span>Anthropic Claude</span><span>@anthropic-ai/sdk</span><span>Vercel</span><span>Upstash Redis</span><span>Vitest · 11 tests</span></div>
+<p class="sub" style="margin-bottom:2px">Shaped by adversarial review</p>
+<div class="quote"><span class="q">"You say clauses are 'ranked by severity', but nothing sorts them."</span><br>Correct. Added a stable high→medium→low sort in the parser, so the claim is true on the live path, not just in the demo fixture.</div>
+<div class="quote"><span class="q">"The rate limit shipped but never returns 429."</span><br>Vercel's Upstash integration injects <code>KV_REST_API_*</code>, not <code>UPSTASH_REDIS_REST_*</code>. The limiter now accepts both, <span class="ok">verified returning 429 under a concurrent burst</span>.</div>
+
+<h2><span class="n">06</span> Try it in 60 seconds</h2>
+<table>
+  <tr><td class="k">1 · Open</td><td><code>plainspeak-nine.vercel.app</code></td></tr>
+  <tr><td class="k">2 · One click</td><td>Hit the <strong>Apartment lease</strong> example (a real, trap-laden lease loads).</td></tr>
+  <tr><td class="k">3 · Make it plain</td><td>In a few seconds: the plain explanation, the high/medium/low clauses, and the questions to ask.</td></tr>
+  <tr><td class="k">4 · Bring your own</td><td>Paste a medical letter or a terms-of-service and set "your situation" to see it tailored.</td></tr>
+</table>
+
+<div class="foot">plainspeak-nine.vercel.app · github.com/OrionArchitekton/plainspeak · built end to end by Claude Code (Anthropic's agentic CLI) for the FutureAI Global Hackathon 2026</div>
+
+</body>
+</html>

@@ -14,6 +14,7 @@ questions to ask before you sign. Next.js + Claude, server-side key, determinist
 Built end-to-end by Claude Code for the FutureAI Global Hackathon 2026.
 - Live: https://plainspeak-nine.vercel.app
 - Code: https://github.com/OrionArchitekton/plainspeak
+- Demo video: https://youtu.be/EbHJ4gQpNS8
 
 (Ship via `/launch-oss` — creates the /works/<slug> subpath page + listing card. Operator-gated.)
 
