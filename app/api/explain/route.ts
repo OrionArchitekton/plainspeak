@@ -21,15 +21,23 @@ const MAX_DOC_CHARS = 16000;
 // minute so a stray loop cannot drain the API budget. Activates only when an
 // Upstash Redis is configured; absent it (local dev, demo capture), requests
 // pass through unthrottled. This is defense-in-depth, not an auth gate.
-const ratelimit =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Ratelimit({
-        redis: Redis.fromEnv(),
-        limiter: Ratelimit.slidingWindow(6, "60 s"),
-        prefix: "plainspeak",
-        analytics: false,
-      })
-    : null;
+function makeRatelimit(): Ratelimit | null {
+  // Accept either the Upstash-native names or Vercel's KV/Marketplace names
+  // (the Vercel Upstash integration injects KV_REST_API_URL / KV_REST_API_TOKEN).
+  const url =
+    process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token =
+    process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  return new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(6, "60 s"),
+    prefix: "plainspeak",
+    analytics: false,
+  });
+}
+
+const ratelimit = makeRatelimit();
 
 function clientIp(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
