@@ -25,8 +25,11 @@ The prompt-building and parsing logic is pure and unit-tested (`lib/explain.test
 - **Next.js 15** (App Router) + **React 19** + **TypeScript**
 - **Tailwind CSS v4** for the UI
 - **Anthropic Claude** via `@anthropic-ai/sdk`, called server-side from a route handler (`app/api/explain/route.ts`) so the API key is never exposed to the browser
+- **Upstash Redis** rate limiting (optional): when configured, each client is capped at 6 explanations/minute on the public deployment; absent it, the API runs unthrottled
 - **Vitest** for the core-logic tests
 - Deployed on **Vercel**
+
+The recorded demo uses a deterministic mode (`?demo=lease`) that renders a frozen, real Claude response so the walkthrough is stable; normal visitors get the live app.
 
 ## Run it locally
 

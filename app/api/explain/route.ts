@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
 import {
   buildSystemPrompt,
@@ -15,6 +17,26 @@ const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 const VALID_LEVELS: ReadingLevel[] = ["child", "plain", "detailed"];
 const MAX_DOC_CHARS = 16000;
 
+// Abuse guard for the public demo: caps a single client to 6 explanations per
+// minute so a stray loop cannot drain the API budget. Activates only when an
+// Upstash Redis is configured; absent it (local dev, demo capture), requests
+// pass through unthrottled. This is defense-in-depth, not an auth gate.
+const ratelimit =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Ratelimit({
+        redis: Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(6, "60 s"),
+        prefix: "plainspeak",
+        analytics: false,
+      })
+    : null;
+
+function clientIp(req: NextRequest): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0]!.trim();
+  return req.headers.get("x-real-ip")?.trim() || "anonymous";
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -22,6 +44,17 @@ export async function POST(req: NextRequest) {
       { error: "Server is missing ANTHROPIC_API_KEY." },
       { status: 500 },
     );
+  }
+
+  if (ratelimit) {
+    const { success, reset } = await ratelimit.limit(clientIp(req));
+    if (!success) {
+      const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+      return NextResponse.json(
+        { error: "You're going a bit fast. Please wait a moment and try again." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } },
+      );
+    }
   }
 
   let body: Partial<ExplainRequest>;
@@ -63,6 +96,7 @@ export async function POST(req: NextRequest) {
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 2000,
+      temperature: 0,
       system: buildSystemPrompt(request),
       messages: [{ role: "user", content: buildUserPrompt(request) }],
     });
