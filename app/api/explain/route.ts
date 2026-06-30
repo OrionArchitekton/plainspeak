@@ -134,7 +134,6 @@ export async function POST(req: NextRequest) {
     if (rlRemaining !== null) {
       res.headers.set("X-RateLimit-Remaining", String(rlRemaining));
     }
-    res.headers.set("X-RateLimit-Key", rlKey);
     return res;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
