@@ -1,7 +1,7 @@
 {
-  "script": "/home/orion/src/plainspeak/demo/DEMO_SCRIPT.md",
+  "script": "/home/orion/src/orion-estate/personal-brand/hackathons/plainspeak/demo/DEMO_SCRIPT.md",
   "dashboardBaseUrl": "http://localhost:3000",
-  "out": "/home/orion/src/plainspeak/demo/out",
+  "out": "/home/orion/src/orion-estate/personal-brand/hackathons/plainspeak/demo/out",
   "resolution": { "width": 1920, "height": 1080 },
   "fps": 30,
   "voice": { "voiceId": "21m00Tcm4TlvDq8ikWAM", "modelId": "eleven_flash_v2_5", "seed": 42, "stability": 0.5, "similarity": 0.75 },
