@@ -115,5 +115,10 @@ export function parseExplanation(raw: string): Explanation {
     throw new Error("Model reply had none of the expected fields");
   }
 
+  // Surface the riskiest clauses first. Array.sort is stable, so the model's
+  // "most important first" ordering is preserved within each severity tier.
+  const severityRank: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
+  affectsYou.sort((a, b) => severityRank[a.severity] - severityRank[b.severity]);
+
   return { plain, affectsYou, questions };
 }

@@ -42,7 +42,7 @@ pnpm dev                     # http://localhost:3000
 
 ## Honesty notes
 
-- This project was written end-to-end by **Claude Code** as a hackathon build; the git history is the record.
+- This project was written end-to-end by **Claude Code** (Anthropic's agentic CLI), operated by Dan Mercede. Every commit carries a `Co-Authored-By: Claude` trailer; the author shown in git is the operator's identity, not a claim that a human wrote the code.
 - Plainspeak helps a person _understand_ a document. It is explicitly **not** legal, medical, or financial advice, and it says so in the UI and in the model's own guardrail.
 - It does not store your documents; each request is processed and returned, nothing is persisted.
 

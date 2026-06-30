@@ -81,6 +81,35 @@ describe("parseExplanation", () => {
     expect(r.affectsYou[0]).toEqual({ point: "a deadline applies", severity: "medium" });
   });
 
+  it("sorts affects_you by severity (high, then medium, then low)", () => {
+    const r = parseExplanation(
+      JSON.stringify({
+        plain: "p",
+        affects_you: [
+          { point: "low one", severity: "low" },
+          { point: "high one", severity: "high" },
+          { point: "medium one", severity: "medium" },
+        ],
+        questions: [],
+      }),
+    );
+    expect(r.affectsYou.map((a) => a.severity)).toEqual(["high", "medium", "low"]);
+  });
+
+  it("keeps model order within the same severity tier (stable sort)", () => {
+    const r = parseExplanation(
+      JSON.stringify({
+        plain: "p",
+        affects_you: [
+          { point: "first high", severity: "high" },
+          { point: "second high", severity: "high" },
+        ],
+        questions: [],
+      }),
+    );
+    expect(r.affectsYou.map((a) => a.point)).toEqual(["first high", "second high"]);
+  });
+
   it("throws when there is no JSON at all", () => {
     expect(() => parseExplanation("I cannot help with that.")).toThrow();
   });
