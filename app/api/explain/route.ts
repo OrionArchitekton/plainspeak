@@ -54,14 +54,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const rlKey = clientIp(req);
+  let rlRemaining: number | null = null;
   if (ratelimit) {
-    const { success, reset } = await ratelimit.limit(clientIp(req));
-    if (!success) {
-      const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-      return NextResponse.json(
-        { error: "You're going a bit fast. Please wait a moment and try again." },
-        { status: 429, headers: { "Retry-After": String(retryAfter) } },
-      );
+    try {
+      const { success, reset, remaining } = await ratelimit.limit(rlKey);
+      rlRemaining = remaining;
+      if (!success) {
+        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+        return NextResponse.json(
+          { error: "You're going a bit fast. Please wait a moment and try again." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(retryAfter),
+              "X-RateLimit-Active": "true",
+            },
+          },
+        );
+      }
+    } catch {
+      // Redis unreachable: fail open so the app keeps working, but flag it.
+      rlRemaining = -1;
     }
   }
 
@@ -115,7 +129,13 @@ export async function POST(req: NextRequest) {
       .join("\n");
 
     const explanation = parseExplanation(text);
-    return NextResponse.json(explanation);
+    const res = NextResponse.json(explanation);
+    res.headers.set("X-RateLimit-Active", String(ratelimit !== null));
+    if (rlRemaining !== null) {
+      res.headers.set("X-RateLimit-Remaining", String(rlRemaining));
+    }
+    res.headers.set("X-RateLimit-Key", rlKey);
+    return res;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
