@@ -21,6 +21,9 @@ affected party. Plainspeak closes that comprehension gap.
    cancellation and refund branches even when the reader asks about one scenario.
    Shorter sentences at simpler reading levels must preserve those rules. Refunds
    refer to amounts actually paid; a full-price refund must not be assumed.
+   Reader-reported payments remain explicit conditional assumptions, not verified
+   facts. Document-stated prices, deductions and duplicate-charge amounts remain
+   intact; a cap's reference period must not be added to a refund rule.
    Payment-based caps retain their formula and reference period in every
    restatement; an unknown payment history must not become an assumed fixed cap
    or numeric illustration calculated from the periodic price.

@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import workshopRequest from "../evals/fixtures/workshop-refunds.json";
+import subscriptionRequest from "../evals/fixtures/subscription-liability.json";
 import {
   buildSystemPrompt,
   buildUserPrompt,
@@ -50,6 +52,23 @@ describe("buildSystemPrompt", () => {
     expect(sys).toContain("actual-paid-fees formulas");
     expect(sys).toContain("payment history is not established");
     expect(sys).toContain("do not substitute a fixed amount");
+  });
+
+  it("keeps workshop overrides with each refund rule without assuming full payment", () => {
+    expect(workshopRequest.readingLevel).toBe("child");
+    const sys = buildSystemPrompt({ ...workshopRequest, readingLevel: "child" });
+    expect(sys).toMatch(/no-refund rule has overrides.*same sentence or impact point.*each restatement/);
+    expect(sys).toContain("not an assumed full contract price");
+    expect(sys).toContain("reader-reported payments are conditional assumptions, not verified facts");
+  });
+
+  it("keeps subscription caps distinct from refunds and document-stated amounts", () => {
+    expect(subscriptionRequest.readingLevel).toBe("detailed");
+    const sys = buildSystemPrompt({ ...subscriptionRequest, readingLevel: "detailed" });
+    expect(sys).toContain("only where the document defines them");
+    expect(sys).toContain("Do not add a cap's lookback period to a refund rule");
+    expect(sys).toContain("Preserve document-stated prices, deductions and duplicate-charge amounts");
+    expect(sys).toMatch(/payment history is not established.*do not substitute a fixed amount.*numeric cap illustration/);
   });
 });
 
