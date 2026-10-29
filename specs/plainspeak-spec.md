@@ -11,6 +11,12 @@ affected party. Plainspeak closes that comprehension gap.
 1. **Plain explanation at a chosen level.** Given a pasted document and a reading level
    (child / plain / detailed), the reader receives a plain-language explanation of what
    the document is and says, honoring the chosen level.
+   Generation guidance requires material exceptions, conditions and exclusions to
+   stay with their rules, including each impact point that restates a rule. It asks
+   for a liability cap and its exceptions together, rather than an unconditional
+   maximum or an exception mentioned only in a question. Live content evaluations
+   check this behavior for their tested documents; there is no deterministic
+   semantic gate or guarantee of general factual completeness.
 2. **Personalized impact.** Given an optional "your situation" note, the "what affects
    you" list is tailored to that reader, with each item ranked high / medium / low so the
    most consequential clauses surface first.

@@ -38,6 +38,8 @@ Load the input page and frozen demo on desktop and mobile. The privacy notice mu
 
 The app does not persist documents; the provider and hosting stack have their own handling. Do not market this as zero retention, offline, professional advice or suitable for regulated medical records. The model can be wrong; validate against original text.
 
+For the liability-exception regression, repeat the unchanged fictional request and compare the returned and rendered result against `evals/README.md`. Keep private request/response and screenshot evidence. Verify the exception's meaning in every restated cap, including paraphrases; keyword matches alone are insufficient. A prompt instruction and one live result cannot guarantee general factual completeness. Do not capture real customer documents for this check.
+
 ## Rollback
 
 Use Vercel's deployment history to restore the previously approved deployment after checking environment compatibility, or stop the local server with Ctrl+C. Stop external access if spend or privacy handling is unclear. No document database migration is involved. Preserve any rate-limit store settings separately; do not delete shared stores. Before selling a hosted tier, add and test authentication, enforceable quotas, billing/cancellation, spend limits and support terms under a separate implementation review.

@@ -29,6 +29,13 @@ describe("buildSystemPrompt", () => {
     const sys = buildSystemPrompt({ document: "x", readingLevel: "plain" });
     expect(sys).toContain("ONLY a JSON object");
   });
+
+  it.each(["child", "plain", "detailed"] as const)("keeps exception-preservation guidance at the %s level", readingLevel => {
+    const sys = buildSystemPrompt({ document: "A qualified rule.", readingLevel });
+    expect(sys).toContain("exceptions, conditions and exclusions");
+    expect(sys).toContain("same explanation sentence or affects_you point");
+    expect(sys).toMatch(/liability caps.*cap and any exceptions together/);
+  });
 });
 
 describe("buildUserPrompt", () => {
