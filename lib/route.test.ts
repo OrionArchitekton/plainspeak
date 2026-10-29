@@ -30,6 +30,27 @@ describe("explanation privacy boundary", () => {
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "test-only");
     return (await import("../app/api/explain/route")).POST;
   }
+  it.each(["x", "界"])("rejects oversized UTF-8 bodies before quota or model use (%s)", async character => {
+    const post = await limitedPost();
+    const bytes = new TextEncoder().encode(JSON.stringify({ document: "A fictional lease", ignored: character.repeat(131073) }));
+    const cancelled = vi.fn();
+    let offset = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (offset === bytes.length) { controller.close(); return; }
+        controller.enqueue(bytes.slice(offset, offset + 8192)); offset = Math.min(offset + 8192, bytes.length);
+      }, cancel: cancelled,
+    });
+    const incoming = new NextRequest("http://localhost/api/explain", {
+      method: "POST", body: stream, headers: { "Content-Type": "application/json", "Content-Length": "1" },
+    });
+    const response = await post(incoming);
+    expect(response.status).toBe(413);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(cancelled).toHaveBeenCalled();
+    expect(limit).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
   it("does not call the model if the configured limiter is unavailable", async () => {
     const post = await limitedPost();
     limit.mockRejectedValue(new Error("private limiter details"));
@@ -38,6 +59,35 @@ describe("explanation privacy boundary", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(await response.text()).not.toContain("private");
     expect(create).not.toHaveBeenCalled();
+  });
+  it.each([null, {}, { success: "yes", remaining: 5, reset: 1000 },
+    { success: true, remaining: 5 }, { success: true, remaining: NaN, reset: 1000 },
+    { success: false, remaining: 0, reset: Infinity }])("fails closed on a malformed limiter result %j", async result => {
+    const post = await limitedPost();
+    limit.mockResolvedValue(result);
+    const response = await post(request({ document: "A fictional lease" }));
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(create).not.toHaveBeenCalled();
+  });
+  it("reports an allowed slot and honors the next denial after a model failure", async () => {
+    const post = await limitedPost();
+    const reset = Date.now() + 60000;
+    limit.mockResolvedValueOnce({ success: true, remaining: 5, reset })
+      .mockResolvedValueOnce({ success: true, remaining: 4, reset })
+      .mockResolvedValueOnce({ success: false, remaining: 0, reset });
+    create.mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({
+      plain: "Pay rent on the first.", affects_you: [{ point: "Rent is due", severity: "high" }],
+      questions: ["When is it due?", "How can I pay?", "Who do I contact?"],
+    }) }] }).mockResolvedValueOnce({ content: [] });
+    const response = await post(request({ document: "A fictional lease" }));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-RateLimit-Active")).toBe("true");
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("5");
+    expect((await post(request({ document: "A fictional lease" }))).status).toBe(502);
+    expect((await post(request({ document: "A fictional lease" }))).status).toBe(429);
+    expect(limit).toHaveBeenCalledTimes(3);
+    expect(create).toHaveBeenCalledTimes(2);
   });
   it("rejects invalid input before consuming a limiter slot", async () => {
     const post = await limitedPost();

@@ -7,7 +7,7 @@ references: [package.json, pnpm-lock.yaml, .env.example, app/api/explain/route.t
 
 # Deploy and operate Plainspeak
 
-This is a source/deploy guide, not a claim that a hosted service has been released. Dan's license decision remains pending.
+This is a source/deploy guide, not a claim that a hosted service has been released. The source is MIT licensed with Dan's approval.
 
 ## Local production validation
 
@@ -30,11 +30,11 @@ Open `http://localhost:3000/?demo=lease`. Check the saved-example label, readabl
 3. Use deployment protection or an authenticated access layer for initial review. Configure provider budget controls. This app has no user authentication, customer billing or monthly quotas.
 4. Optionally configure both `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (or the `KV_REST_API_*` aliases). Do not enable Redis analytics or request-body logging. This stores per-client rate counters/identifiers, not documents. A configured limiter fails closed with 503 if Redis is unavailable. Invalid input is rejected before using a limiter slot. Per-IP limits are still not a budget boundary.
 5. Review the host/proxy's log collection and retention, suppress request/response-body capture and keep private material out of test requests. Confirm provider retention terms separately. No database or document volume is needed.
-6. Only the operator should initiate a preview/production deploy after approving hosting/provider costs and licensing. This task does not deploy, create credentials or change a live project.
+6. Initiate a production deployment only with the operator's approval for that project and hosting/provider costs. A connected Git production branch may deploy automatically on merge; check that setting before merging. Deployment approval does not authorize creating credentials or changing shared environment secrets.
 
 ## Consumer validation and monitoring
 
-Load the input page and frozen demo on desktop and mobile. The privacy notice must appear before any submit. An authorized synthetic live explanation should render all result sections; malformed text/oversized documents should return 400, and errors must omit provider details. Successful and error API responses request no-store caching. Check rate-limit behavior when configured; never infer spend safety from per-IP limits. Watch request status/error counts and provider spend, without capturing documents or response bodies.
+Load the input page and frozen demo on desktop and mobile. The privacy notice must appear before any submit. An authorized synthetic live explanation should render all result sections; malformed text/oversized documents should return 400, request bodies over 128 KiB should return 413 before JSON parsing or quota use, and errors must omit provider details. Successful and error API responses request no-store caching. Check rate-limit behavior when configured: outages or malformed limiter results must return 503 without a model call. Never infer spend safety from per-IP limits. Watch request status/error counts and provider spend, without capturing documents or response bodies.
 
 The app does not persist documents; the provider and hosting stack have their own handling. Do not market this as zero retention, offline, professional advice or suitable for regulated medical records. The model can be wrong; validate against original text.
 

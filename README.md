@@ -48,13 +48,13 @@ The [deploy runbook](docs/runbooks/deploy.md) covers a local production build an
 
 Rate limiting is optional: with Upstash configured, the route attempts a six-per-minute per-IP limit. Without it the endpoint is unthrottled. With a configured limiter, Redis failures return 503 without calling the model; invalid input is rejected before taking a slot. It is not authentication, a spending cap or a paid-tier quota. Restrict access and provider spend before any public rollout. Production readiness for a paid tier requires additional controls.
 
-## Paid hosted tier (proposal)
+## Planned paid hosted tier
 
-**Suggested $9 USD/month for up to 50 explanations**, each within the existing text limit. Proposed value: no API key setup for the customer, browser access and basic support. This tier is **not implemented or offered yet**. Billing, customer access, enforceable monthly quotas, cost controls, support terms and hosting/provider privacy review must be completed and approved before charging. No checkout or subscription was created. See [SWAPMEET.md](SWAPMEET.md).
+**Approved planned price: $9 USD/month for up to 50 explanations**, each within the existing text limit. Planned value: no API key setup for the customer, browser access and basic support. This tier is **not implemented or offered yet**. Billing, customer access, enforceable monthly quotas, cost controls, support terms and hosting/provider privacy review must be completed and approved before charging. No checkout or subscription was created. See [SWAPMEET.md](SWAPMEET.md).
 
-## License proposal
+## License
 
-MIT is proposed for Dan's approval in [the draft license](docs/PROPOSED-MIT-LICENSE.txt). There is no adopted root LICENSE file. The old README said MIT but no LICENSE file was present; this PR leaves adoption to Dan. Confirm licensing before redistribution or sale.
+MIT, approved by Dan. See [LICENSE](LICENSE).
 
 ## Development
 

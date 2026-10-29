@@ -22,6 +22,34 @@ function respond(body: unknown, init: ResponseInit = {}) {
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 const VALID_LEVELS: ReadingLevel[] = ["child", "plain", "detailed"];
 const MAX_DOC_CHARS = 16000;
+const MAX_BODY_BYTES = 128 * 1024;
+
+class BodyTooLarge extends Error {}
+
+async function readBody(req: NextRequest): Promise<Partial<ExplainRequest>> {
+  if (!req.body) throw new SyntaxError("Missing body");
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_BODY_BYTES) {
+        void reader.cancel().catch(() => {});
+        throw new BodyTooLarge();
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+}
 
 // Abuse guard for the public demo: caps a single client to 6 explanations per
 // minute so a stray loop cannot drain the API budget. Activates only when an
@@ -62,8 +90,11 @@ export async function POST(req: NextRequest) {
 
   let body: Partial<ExplainRequest>;
   try {
-    body = await req.json();
-  } catch {
+    body = await readBody(req);
+  } catch (error) {
+    if (error instanceof BodyTooLarge) {
+      return respond({ error: "Request body is too large (max 128 KiB)." }, { status: 413 });
+    }
     return respond({ error: "Invalid JSON body." }, { status: 400 });
   }
 
@@ -104,6 +135,10 @@ export async function POST(req: NextRequest) {
   if (ratelimit) {
     try {
       const { success, reset, remaining } = await ratelimit.limit(rlKey);
+      if (typeof success !== "boolean" || !Number.isFinite(reset) || reset <= 0 ||
+          !Number.isInteger(remaining) || remaining < 0) {
+        throw new Error("Invalid limiter result");
+      }
       rlRemaining = remaining;
       if (!success) {
         const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
