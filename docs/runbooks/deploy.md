@@ -1,0 +1,43 @@
+---
+verified: 2026-10-28
+review_after: 2026-11-28
+topics: [deployment, privacy, rollback]
+references: [package.json, pnpm-lock.yaml, .env.example, app/api/explain/route.ts, app/PlainspeakApp.tsx]
+---
+
+# Deploy and operate Plainspeak
+
+This is a source/deploy guide, not a claim that a hosted service has been released. Dan's license decision remains pending.
+
+## Local production validation
+
+Use Node.js 22+ and pnpm:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm test
+pnpm exec tsc --noEmit
+pnpm build
+pnpm start --hostname 127.0.0.1
+```
+
+Open `http://localhost:3000/?demo=lease`. Check the saved-example label, readable results and the privacy/advice notice. This uses no API key or live model call. For live text, supply your own server-side key in ignored `.env.local` and restart. Use only fictional or redacted input and explicitly approve provider usage first.
+
+## Hosted option: Vercel
+
+1. Fork the approved source into your own account. In Vercel, create a new project and import that repository. Select the Next.js preset; install with `pnpm install --frozen-lockfile`, build with `pnpm build`.
+2. Add `ANTHROPIC_API_KEY` as a server-side environment secret for the intended environment, never as `NEXT_PUBLIC_*`. Optionally set `ANTHROPIC_MODEL`. New environment settings apply to a new deployment; see [Vercel's guide](https://vercel.com/docs/environment-variables).
+3. Use deployment protection or an authenticated access layer for initial review. Configure provider budget controls. This app has no user authentication, customer billing or monthly quotas.
+4. Optionally configure both `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (or the `KV_REST_API_*` aliases). Do not enable Redis analytics or request-body logging. This stores per-client rate counters/identifiers, not documents. The limiter is best-effort and fails open if Redis is unavailable; it is not a budget boundary.
+5. Review the host/proxy's log collection and retention, suppress request/response-body capture and keep private material out of test requests. Confirm provider retention terms separately. No database or document volume is needed.
+6. Only the operator should initiate a preview/production deploy after approving hosting/provider costs and licensing. This task does not deploy, create credentials or change a live project.
+
+## Consumer validation and monitoring
+
+Load the input page and frozen demo on desktop and mobile. The privacy notice must appear before any submit. An authorized synthetic live explanation should render all result sections; malformed text/oversized documents should return 400, and errors must omit provider details. Successful and error API responses request no-store caching. Check rate-limit behavior when configured; never infer spend safety from per-IP limits. Watch request status/error counts and provider spend, without capturing documents or response bodies.
+
+The app does not persist documents; the provider and hosting stack have their own handling. Do not market this as zero retention, offline, professional advice or suitable for regulated medical records. The model can be wrong; validate against original text.
+
+## Rollback
+
+Use Vercel's deployment history to restore the previously approved deployment after checking environment compatibility, or stop the local server with Ctrl+C. Stop external access if spend or privacy handling is unclear. No document database migration is involved. Preserve any rate-limit store settings separately; do not delete shared stores. Before selling a hosted tier, add and test authentication, enforceable quotas, billing/cancellation, spend limits and support terms under a separate implementation review.

@@ -13,6 +13,12 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+function respond(body: unknown, init: ResponseInit = {}) {
+  const response = NextResponse.json(body, init);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 const VALID_LEVELS: ReadingLevel[] = ["child", "plain", "detailed"];
 const MAX_DOC_CHARS = 16000;
@@ -48,7 +54,7 @@ function clientIp(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
+    return respond(
       { error: "Server is missing ANTHROPIC_API_KEY." },
       { status: 500 },
     );
@@ -62,7 +68,7 @@ export async function POST(req: NextRequest) {
       rlRemaining = remaining;
       if (!success) {
         const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-        return NextResponse.json(
+        return respond(
           { error: "You're going a bit fast. Please wait a moment and try again." },
           {
             status: 429,
@@ -83,18 +89,24 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return respond({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body) ||
+      typeof body.document !== "string" ||
+      (body.situation !== undefined && (typeof body.situation !== "string" || body.situation.length > 1000))) {
+    return respond({ error: "Provide a document and an optional short situation as text." }, { status: 400 });
   }
 
   const document = (body.document || "").trim();
   if (!document) {
-    return NextResponse.json(
+    return respond(
       { error: "Paste a document to explain." },
       { status: 400 },
     );
   }
   if (document.length > MAX_DOC_CHARS) {
-    return NextResponse.json(
+    return respond(
       { error: `Document is too long (max ${MAX_DOC_CHARS} characters).` },
       { status: 400 },
     );
@@ -129,16 +141,15 @@ export async function POST(req: NextRequest) {
       .join("\n");
 
     const explanation = parseExplanation(text);
-    const res = NextResponse.json(explanation);
+    const res = respond(explanation);
     res.headers.set("X-RateLimit-Active", String(ratelimit !== null));
     if (rlRemaining !== null) {
       res.headers.set("X-RateLimit-Remaining", String(rlRemaining));
     }
     return res;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Could not generate a plain-language explanation: ${message}` },
+  } catch {
+    return respond(
+      { error: "Could not generate an explanation. Please try again later." },
       { status: 502 },
     );
   }

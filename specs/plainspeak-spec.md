@@ -16,22 +16,22 @@ affected party. Plainspeak closes that comprehension gap.
    most consequential clauses surface first.
 3. **Actionable questions.** The reader receives 3-5 specific questions to ask the other
    party before agreeing.
-4. **One-click demonstration.** Built-in example documents (lease, medical letter, ToS)
-   let any visitor see the full result in seconds without typing.
+4. **Sample demonstration.** Built-in example documents reduce typing for live explanations. The separate `?demo=lease` view shows a frozen sample result without calling the model; it is labeled as a sample.
 5. **Resilient to model formatting.** If the model wraps its JSON in code fences or stray
    prose, or returns an out-of-range severity, the result still renders cleanly rather
    than erroring.
 6. **Safe by construction.** The key never reaches the browser; the UI and the model's
-   own guardrail both state this is not professional advice; documents are not persisted.
+   own guardrail both state this is not professional advice; the application does not persist document contents. Live requests send the document and optional situation to Anthropic; provider and host retention are separate boundaries and disclosed before submission.
+
+7. **Private responses.** Explanation and error responses request no-store caching. Provider exception details are never returned to the browser. The UI warns before submission that this is not legal or medical advice and that content is sent to Anthropic.
+8. **Invalid requests.** With the service configured, non-object JSON, non-string documents or situation fields, blank documents, documents longer than 16,000 characters and situations longer than 1,000 characters return 400 without a model call.
 
 ## Test seam
 
-The feature is exercised at one seam: the pure `lib/explain.ts` module
+Core explanation behavior is exercised at one seam: the pure `lib/explain.ts` module
 (`buildSystemPrompt`, `buildUserPrompt`, `parseExplanation`) under Vitest. This is where
 the reading-level contract, personalization, JSON-output contract, and defensive parsing
-all live, so it is the highest-leverage single seam. The network/SDK boundary
-(`app/api/explain/route.ts`) is a thin adapter over that seam and is validated manually
-against the live model.
+all live, so it is the highest-leverage single seam. The HTTP adapter is also exercised with Vitest and an injected SDK response: validation, provider-failure privacy and no-store headers require that separate seam. A local production-browser check verifies the visible notice and frozen demo. Live model quality still requires a separately authorized API call.
 
 ## Out of scope
 
