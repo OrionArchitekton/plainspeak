@@ -38,7 +38,7 @@ Load the input page and frozen demo on desktop and mobile. The privacy notice mu
 
 The app does not persist documents; the provider and hosting stack have their own handling. Do not market this as zero retention, offline, professional advice or suitable for regulated medical records. The model can be wrong; validate against original text.
 
-For the liability-exception regression, submit the unchanged request in `evals/fixtures/liability-exception.json` through the deployed UI after an approved deployment. Preserve a private browser capture containing `request`, `observations.network.requests` (with response `status` and `body`) and `observations.page` (with rendered `text` and `sampleLabel`). Run `node evals/check-liability-exception.mjs <capture.json>`. This reads evidence without sending another request. The same-point cap/exception check must pass, and a person must compare the explanation with the source: a prompt instruction and one live result cannot guarantee general factual completeness. Use fictional data only; captures of real customer documents are inappropriate for this check.
+For the liability-exception regression, repeat the unchanged fictional request and compare the returned and rendered result against `evals/README.md`. Keep private request/response and screenshot evidence. Verify the exception's meaning in every restated cap, including paraphrases; keyword matches alone are insufficient. A prompt instruction and one live result cannot guarantee general factual completeness. Do not capture real customer documents for this check.
 
 ## Rollback
 
