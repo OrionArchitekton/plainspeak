@@ -84,6 +84,14 @@ describe("buildSystemPrompt", () => {
     expect(sys).toContain("parts and labor");
     expect(sys).toContain("sequence of events does not establish causation");
   });
+
+  it("keeps a document-stated fixed cap independent of payment history", () => {
+    const request = { document: "Liability is limited to $500 except for fraud.", readingLevel: "plain" as const };
+    const sys = buildSystemPrompt(request);
+    expect(sys).toContain("Only for a cap the document defines by fees actually paid");
+    expect(sys).toContain("Preserve fixed numeric caps stated in the document and their exceptions");
+    expect(buildUserPrompt(request)).toContain(request.document);
+  });
 });
 
 describe("buildUserPrompt", () => {

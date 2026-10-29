@@ -31,6 +31,8 @@ affected party. Plainspeak closes that comprehension gap.
    Payment-based caps retain their formula and reference period in every
    restatement; an unknown payment history must not become an assumed fixed cap
    or numeric illustration calculated from the periodic price.
+   Fixed numeric caps stated in a document keep their amount and exceptions;
+   they must not be made dependent on a payment history absent that source rule.
 2. **Personalized impact.** Given an optional "your situation" note, the "what affects
    you" list is tailored to that reader, with each item ranked high / medium / low so the
    most consequential clauses surface first.
