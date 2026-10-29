@@ -17,6 +17,13 @@ affected party. Plainspeak closes that comprehension gap.
    maximum or an exception mentioned only in a question. Live content evaluations
    check this behavior for their tested documents; there is no deterministic
    semantic gate or guarantee of general factual completeness.
+   Guidance also requires the plain explanation to cover all material financial,
+   cancellation and refund branches even when the reader asks about one scenario.
+   Shorter sentences at simpler reading levels must preserve those rules. Refunds
+   refer to amounts actually paid; a full-price refund must not be assumed.
+   Payment-based caps retain their formula and reference period in every
+   restatement; an unknown payment history must not become an assumed fixed cap
+   or numeric illustration calculated from the periodic price.
 2. **Personalized impact.** Given an optional "your situation" note, the "what affects
    you" list is tailored to that reader, with each item ranked high / medium / low so the
    most consequential clauses surface first.

@@ -36,6 +36,21 @@ describe("buildSystemPrompt", () => {
     expect(sys).toContain("same explanation sentence or affects_you point");
     expect(sys).toMatch(/liability caps.*cap and any exceptions together/);
   });
+
+  it.each(["child", "plain", "detailed"] as const)("requires complete financial branches at the %s level", readingLevel => {
+    const sys = buildSystemPrompt({ document: "A conditional refund policy.", readingLevel, situation: "I cancel late." });
+    expect(sys).toContain("all material branches");
+    expect(sys).toContain("cancellation and refund rules");
+    expect(sys).toContain("Personalization must not omit");
+    expect(sys).toContain("refunds of amounts actually paid");
+  });
+
+  it.each(["child", "plain", "detailed"] as const)("preserves payment-based formulas at the %s level", readingLevel => {
+    const sys = buildSystemPrompt({ document: "Liability depends on fees actually paid.", readingLevel });
+    expect(sys).toContain("actual-paid-fees formulas");
+    expect(sys).toContain("payment history is not established");
+    expect(sys).toContain("do not substitute a fixed amount");
+  });
 });
 
 describe("buildUserPrompt", () => {
