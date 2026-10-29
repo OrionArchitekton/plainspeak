@@ -13,9 +13,43 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
+function respond(body: unknown, init: ResponseInit = {}) {
+  const response = NextResponse.json(body, init);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 const VALID_LEVELS: ReadingLevel[] = ["child", "plain", "detailed"];
 const MAX_DOC_CHARS = 16000;
+const MAX_BODY_BYTES = 128 * 1024;
+
+class BodyTooLarge extends Error {}
+
+async function readBody(req: NextRequest): Promise<Partial<ExplainRequest>> {
+  if (!req.body) throw new SyntaxError("Missing body");
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_BODY_BYTES) {
+        void reader.cancel().catch(() => {});
+        throw new BodyTooLarge();
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+}
 
 // Abuse guard for the public demo: caps a single client to 6 explanations per
 // minute so a stray loop cannot drain the API budget. Activates only when an
@@ -48,53 +82,37 @@ function clientIp(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
+    return respond(
       { error: "Server is missing ANTHROPIC_API_KEY." },
       { status: 500 },
     );
   }
 
-  const rlKey = clientIp(req);
-  let rlRemaining: number | null = null;
-  if (ratelimit) {
-    try {
-      const { success, reset, remaining } = await ratelimit.limit(rlKey);
-      rlRemaining = remaining;
-      if (!success) {
-        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-        return NextResponse.json(
-          { error: "You're going a bit fast. Please wait a moment and try again." },
-          {
-            status: 429,
-            headers: {
-              "Retry-After": String(retryAfter),
-              "X-RateLimit-Active": "true",
-            },
-          },
-        );
-      }
-    } catch {
-      // Redis unreachable: fail open so the app keeps working, but flag it.
-      rlRemaining = -1;
-    }
-  }
-
   let body: Partial<ExplainRequest>;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    body = await readBody(req);
+  } catch (error) {
+    if (error instanceof BodyTooLarge) {
+      return respond({ error: "Request body is too large (max 128 KiB)." }, { status: 413 });
+    }
+    return respond({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body) ||
+      typeof body.document !== "string" ||
+      (body.situation !== undefined && (typeof body.situation !== "string" || body.situation.length > 1000))) {
+    return respond({ error: "Provide a document and an optional short situation as text." }, { status: 400 });
   }
 
   const document = (body.document || "").trim();
   if (!document) {
-    return NextResponse.json(
+    return respond(
       { error: "Paste a document to explain." },
       { status: 400 },
     );
   }
   if (document.length > MAX_DOC_CHARS) {
-    return NextResponse.json(
+    return respond(
       { error: `Document is too long (max ${MAX_DOC_CHARS} characters).` },
       { status: 400 },
     );
@@ -111,6 +129,37 @@ export async function POST(req: NextRequest) {
     readingLevel,
     situation: typeof body.situation === "string" ? body.situation : undefined,
   };
+
+  const rlKey = clientIp(req);
+  let rlRemaining: number | null = null;
+  if (ratelimit) {
+    try {
+      const { success, reset, remaining } = await ratelimit.limit(rlKey);
+      if (typeof success !== "boolean" || !Number.isFinite(reset) || reset <= 0 ||
+          !Number.isInteger(remaining) || remaining < 0) {
+        throw new Error("Invalid limiter result");
+      }
+      rlRemaining = remaining;
+      if (!success) {
+        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+        return respond(
+          { error: "You're going a bit fast. Please wait a moment and try again." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(retryAfter),
+              "X-RateLimit-Active": "true",
+            },
+          },
+        );
+      }
+    } catch {
+      return respond(
+        { error: "Please try again shortly. The service is temporarily unavailable." },
+        { status: 503, headers: { "Retry-After": "30", "X-RateLimit-Active": "true" } },
+      );
+    }
+  }
 
   const client = new Anthropic({ apiKey });
 
@@ -129,16 +178,19 @@ export async function POST(req: NextRequest) {
       .join("\n");
 
     const explanation = parseExplanation(text);
-    const res = NextResponse.json(explanation);
+    if (!explanation.plain || explanation.affectsYou.length === 0 ||
+        explanation.questions.length < 3 || explanation.questions.length > 5) {
+      throw new Error("Incomplete explanation");
+    }
+    const res = respond(explanation);
     res.headers.set("X-RateLimit-Active", String(ratelimit !== null));
     if (rlRemaining !== null) {
       res.headers.set("X-RateLimit-Remaining", String(rlRemaining));
     }
     return res;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Could not generate a plain-language explanation: ${message}` },
+  } catch {
+    return respond(
+      { error: "Could not generate an explanation. Please try again later." },
       { status: 502 },
     );
   }

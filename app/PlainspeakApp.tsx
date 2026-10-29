@@ -102,6 +102,18 @@ export default function PlainspeakApp({
         </p>
       </header>
 
+      <aside className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+        Live explanations send your document and optional situation to Anthropic.
+        This app does not save them; provider and hosting retention may apply.
+        Remove personal details before sending. This is not legal or medical advice.
+        {" "}<a className="underline" href="https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data" target="_blank" rel="noreferrer">Provider data policy</a>
+      </aside>
+      {initialResult && result === initialResult && (
+        <p className="mt-3 text-center text-sm text-white/60" role="note">
+          Sample result: this saved example makes no live AI request.
+        </p>
+      )}
+
       {!resultsView && (
         <section className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/40 backdrop-blur sm:p-6">
           <div className="mb-3 flex flex-wrap items-center gap-2">
