@@ -19,12 +19,32 @@ afterEach(() => vi.unstubAllEnvs());
 describe("explanation privacy boundary", () => {
   it("returns a non-cacheable explanation for a valid document", async () => {
     create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({
-      plain: "Pay rent on the first.", affects_you: [], questions: ["When is it due?"],
+      plain: "Pay rent on the first.", affects_you: [{ point: "Rent is due", severity: "high" }],
+      questions: ["When is it due?", "How can I pay?", "Who do I contact?"],
     }) }] });
     const response = await POST(request({ document: "Rent is due on the first." }));
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect((await response.json()).plain).toContain("Pay rent");
+  });
+  it.each([0, 1, 6])("rejects an incomplete question list of length %i", async count => {
+    create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({
+      plain: "Pay rent on the first.", affects_you: [{ point: "Rent is due", severity: "high" }],
+      questions: Array.from({ length: count }, (_, index) => `Question ${index + 1}?`),
+    }) }] });
+    const response = await POST(request({ document: "A fictional lease" }));
+    expect(response.status).toBe(502);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(await response.text()).not.toContain("Pay rent");
+  });
+  it.each(["plain", "affects_you"])("rejects a missing %s section", async missing => {
+    const output = {
+      plain: "Pay rent on the first.", affects_you: [{ point: "Rent is due", severity: "high" }],
+      questions: ["When is it due?", "How can I pay?", "Who do I contact?"],
+      [missing]: missing === "plain" ? "" : [],
+    };
+    create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(output) }] });
+    expect((await POST(request({ document: "A fictional lease" }))).status).toBe(502);
   });
   it.each(["", " ", "x".repeat(16001)])("rejects blank or overlong documents", async document => {
     const response = await POST(request({ document }));

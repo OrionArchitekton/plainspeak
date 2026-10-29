@@ -141,6 +141,10 @@ export async function POST(req: NextRequest) {
       .join("\n");
 
     const explanation = parseExplanation(text);
+    if (!explanation.plain || explanation.affectsYou.length === 0 ||
+        explanation.questions.length < 3 || explanation.questions.length > 5) {
+      throw new Error("Incomplete explanation");
+    }
     const res = respond(explanation);
     res.headers.set("X-RateLimit-Active", String(ratelimit !== null));
     if (rlRemaining !== null) {
