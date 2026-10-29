@@ -17,6 +17,10 @@ affected party. Plainspeak closes that comprehension gap.
    maximum or an exception mentioned only in a question. Live content evaluations
    check this behavior for their tested documents; there is no deterministic
    semantic gate or guarantee of general factual completeness.
+   Guidance keeps exclusions scoped to the rule they modify; exclusion from a
+   special refund override does not remove ordinary refund eligibility. Material
+   coverage inclusions stay explicit, and event order alone does not establish
+   the cause of a later failure.
    Guidance also requires the plain explanation to cover all material financial,
    cancellation and refund branches even when the reader asks about one scenario.
    Shorter sentences at simpler reading levels must preserve those rules. Refunds
@@ -45,6 +49,12 @@ affected party. Plainspeak closes that comprehension gap.
 9. **Output and limits.** Success requires a nonempty explanation, at least one nonempty impact point and three to five nonempty questions. The prompt's three-to-six impact-point target is guidance, not a guarantee of factual completeness. Unknown reading levels fall back to Plain English; a blank optional situation is allowed. Invalid input does not consume a rate-limit slot. A configured limiter that is unavailable or returns a malformed result returns 503 without a model call; a denied limit returns 429 with a retry interval. Allowed responses identify the active limiter and remaining slots. Without limiter settings, the service is unthrottled and requires separate access and spend controls before public use.
 
 ## Test seam
+
+Live generation has a 60-second function allowance and one provider attempt with
+a 50-second timeout and abort signal. The 2,000-token output limit is unchanged.
+Provider failures still use the existing generic, non-cacheable API error; the
+additional time allows detailed responses to finish beyond the prior 30-second
+platform cutoff. This is a bounded provider call, not a retry loop.
 
 Core explanation behavior is exercised at one seam: the pure `lib/explain.ts` module
 (`buildSystemPrompt`, `buildUserPrompt`, `parseExplanation`) under Vitest. This is where

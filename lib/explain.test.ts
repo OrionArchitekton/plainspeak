@@ -70,6 +70,20 @@ describe("buildSystemPrompt", () => {
     expect(sys).toContain("Preserve document-stated prices, deductions and duplicate-charge amounts");
     expect(sys).toMatch(/payment history is not established.*do not substitute a fixed amount.*numeric cap illustration/);
   });
+
+  it("keeps late-refund outcomes conditional and exclusions limited to their own rule", () => {
+    const sys = buildSystemPrompt({ ...workshopRequest, readingLevel: "child" });
+    expect(sys).toContain("Normally no refund for late cancellation, unless");
+    expect(sys).toContain("include every overriding condition and deadline in that sentence");
+    expect(sys).toContain("ordinary rights still apply");
+  });
+
+  it("preserves included coverage and does not turn event order into a cause", () => {
+    const sys = buildSystemPrompt({ document: "Parts and labor are covered. A repair preceded a leak.", readingLevel: "plain" });
+    expect(sys).toContain("Preserve material coverage inclusions");
+    expect(sys).toContain("parts and labor");
+    expect(sys).toContain("sequence of events does not establish causation");
+  });
 });
 
 describe("buildUserPrompt", () => {

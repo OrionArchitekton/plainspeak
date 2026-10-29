@@ -1,16 +1,16 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { create, limit } = vi.hoisted(() => ({ create: vi.fn(), limit: vi.fn() }));
+const { create, limit, makeClient } = vi.hoisted(() => ({ create: vi.fn(), limit: vi.fn(), makeClient: vi.fn() }));
 vi.mock("@anthropic-ai/sdk", () => ({
-  default: vi.fn().mockImplementation(() => ({ messages: { create } })),
+  default: makeClient.mockImplementation(() => ({ messages: { create } })),
 }));
 vi.mock("@upstash/ratelimit", () => ({ Ratelimit: class {
   static slidingWindow() { return {}; }
   limit(...args: unknown[]) { return limit(...args); }
 } }));
 vi.mock("@upstash/redis", () => ({ Redis: class {} }));
-import { POST } from "../app/api/explain/route";
+import { POST, maxDuration } from "../app/api/explain/route";
 
 function request(body: unknown) {
   return new NextRequest("http://localhost/api/explain", {
@@ -19,11 +19,25 @@ function request(body: unknown) {
 }
 
 beforeEach(() => {
-  vi.stubEnv("ANTHROPIC_API_KEY", "test-only-placeholder"); create.mockReset(); limit.mockReset();
+  vi.stubEnv("ANTHROPIC_API_KEY", "test-only-placeholder"); create.mockReset(); limit.mockReset(); makeClient.mockClear();
 });
 afterEach(() => vi.unstubAllEnvs());
 
 describe("explanation privacy boundary", () => {
+  it("bounds one provider attempt below the function deadline without increasing the token budget", async () => {
+    create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({
+      plain: "A fictional agreement", affects_you: [{ point: "A condition applies", severity: "high" }],
+      questions: ["Which condition?", "When does it apply?", "Who confirms it?"],
+    }) }] });
+    const response = await POST(request({ document: "A fictional agreement" }));
+    expect(response.status).toBe(200);
+    expect(makeClient).toHaveBeenCalledWith(expect.objectContaining({ timeout: 50000, maxRetries: 0 }));
+    expect(maxDuration).toBe(60);
+    expect(makeClient.mock.calls[0][0].timeout).toBeLessThan(maxDuration * 1000);
+    expect(create).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    expect(create.mock.calls[0][0].max_tokens).toBe(2000);
+  });
+
   async function limitedPost() {
     vi.resetModules();
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid");

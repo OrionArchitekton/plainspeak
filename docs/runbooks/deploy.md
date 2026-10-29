@@ -34,6 +34,15 @@ Open `http://localhost:3000/?demo=lease`. Check the saved-example label, readabl
 
 ## Consumer validation and monitoring
 
+The explanation function allows 60 seconds. The provider client uses a 50-second
+timeout, a matching abort signal and no automatic retries; its output budget
+remains 2,000 tokens. This leaves time for the existing generic no-store error
+response if generation fails. Verify the deployed detailed fixture completes,
+including responses longer than the former 30-second limit, and monitor platform
+timeouts separately from application 502 errors. Do not raise the token budget or
+add retry attempts to hide a timeout. A rollback returns to the prior function
+configuration; retain its deployment identity before release.
+
 Load the input page and frozen demo on desktop and mobile. The privacy notice must appear before any submit. An authorized synthetic live explanation should render all result sections; malformed text/oversized documents should return 400, request bodies over 128 KiB should return 413 before JSON parsing or quota use, and errors must omit provider details. Successful and error API responses request no-store caching. Check rate-limit behavior when configured: outages or malformed limiter results must return 503 without a model call. Never infer spend safety from per-IP limits. Watch request status/error counts and provider spend, without capturing documents or response bodies.
 
 The app does not persist documents; the provider and hosting stack have their own handling. Do not market this as zero retention, offline, professional advice or suitable for regulated medical records. The model can be wrong; validate against original text.
