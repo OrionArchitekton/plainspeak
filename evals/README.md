@@ -6,6 +6,7 @@ The original live result incorrectly described liability as capped at a maximum 
 
 Acceptance requires direct comparison of the returned explanation and rendered page with the fixture:
 
+- Both the plain explanation and at least one impact point must explain the liability cap and its deliberate-misconduct exception. Omitting the cap or the entire liability clause fails this case.
 - Every restated liability cap must keep its deliberate-misconduct exception in the same sentence or impact point. Include paraphrases such as "the most the provider would have to pay" or "maximum payment" when checking.
 - The exception must actually apply to deliberate misconduct. An exception for late fees alongside a statement that misconduct remains capped fails. An exception mentioned only in a question also fails.
 - Equivalent plain-language wording is valid, including that deliberate misconduct is outside or excluded from the cap. No contradictory unconditional maximum may appear elsewhere.
