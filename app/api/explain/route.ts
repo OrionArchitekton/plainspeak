@@ -11,7 +11,8 @@ import {
 } from "@/lib/explain";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
+const PROVIDER_TIMEOUT_MS = 50000;
 
 function respond(body: unknown, init: ResponseInit = {}) {
   const response = NextResponse.json(body, init);
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: PROVIDER_TIMEOUT_MS, maxRetries: 0 });
 
   try {
     const msg = await client.messages.create({
@@ -170,7 +171,7 @@ export async function POST(req: NextRequest) {
       temperature: 0,
       system: buildSystemPrompt(request),
       messages: [{ role: "user", content: buildUserPrompt(request) }],
-    });
+    }, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
 
     const text = msg.content
       .filter((b) => b.type === "text")
