@@ -11,6 +11,10 @@ affected party. Plainspeak closes that comprehension gap.
 1. **Plain explanation at a chosen level.** Given a pasted document and a reading level
    (child / plain / detailed), the reader receives a plain-language explanation of what
    the document is and says, honoring the chosen level.
+   Material exceptions, conditions and exclusions stay with the rules they qualify,
+   including in each impact point that restates a rule. A liability cap with an
+   exception must not become an unconditional maximum; a question alone cannot
+   substitute for explaining that exception.
 2. **Personalized impact.** Given an optional "your situation" note, the "what affects
    you" list is tailored to that reader, with each item ranked high / medium / low so the
    most consequential clauses surface first.
