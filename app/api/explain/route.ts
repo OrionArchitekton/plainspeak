@@ -60,31 +60,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const rlKey = clientIp(req);
-  let rlRemaining: number | null = null;
-  if (ratelimit) {
-    try {
-      const { success, reset, remaining } = await ratelimit.limit(rlKey);
-      rlRemaining = remaining;
-      if (!success) {
-        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-        return respond(
-          { error: "You're going a bit fast. Please wait a moment and try again." },
-          {
-            status: 429,
-            headers: {
-              "Retry-After": String(retryAfter),
-              "X-RateLimit-Active": "true",
-            },
-          },
-        );
-      }
-    } catch {
-      // Redis unreachable: fail open so the app keeps working, but flag it.
-      rlRemaining = -1;
-    }
-  }
-
   let body: Partial<ExplainRequest>;
   try {
     body = await req.json();
@@ -123,6 +98,33 @@ export async function POST(req: NextRequest) {
     readingLevel,
     situation: typeof body.situation === "string" ? body.situation : undefined,
   };
+
+  const rlKey = clientIp(req);
+  let rlRemaining: number | null = null;
+  if (ratelimit) {
+    try {
+      const { success, reset, remaining } = await ratelimit.limit(rlKey);
+      rlRemaining = remaining;
+      if (!success) {
+        const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+        return respond(
+          { error: "You're going a bit fast. Please wait a moment and try again." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(retryAfter),
+              "X-RateLimit-Active": "true",
+            },
+          },
+        );
+      }
+    } catch {
+      return respond(
+        { error: "Please try again shortly. The service is temporarily unavailable." },
+        { status: 503, headers: { "Retry-After": "30", "X-RateLimit-Active": "true" } },
+      );
+    }
+  }
 
   const client = new Anthropic({ apiKey });
 

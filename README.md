@@ -46,7 +46,7 @@ The notice appears before submission. Model prompts request no invented facts an
 
 The [deploy runbook](docs/runbooks/deploy.md) covers a local production build and a Vercel setup path, provider costs, privacy checks, validation and rollback. No deployment is created by these instructions.
 
-Rate limiting is optional: with Upstash configured, the route attempts a six-per-minute per-IP limit. Without it the endpoint is unthrottled, and the current limiter fails open on a Redis outage. It is not authentication, a spending cap or a paid-tier quota. Restrict access and provider spend before any public rollout. Production readiness for a paid tier requires additional controls.
+Rate limiting is optional: with Upstash configured, the route attempts a six-per-minute per-IP limit. Without it the endpoint is unthrottled. With a configured limiter, Redis failures return 503 without calling the model; invalid input is rejected before taking a slot. It is not authentication, a spending cap or a paid-tier quota. Restrict access and provider spend before any public rollout. Production readiness for a paid tier requires additional controls.
 
 ## Paid hosted tier (proposal)
 
