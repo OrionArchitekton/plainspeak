@@ -37,6 +37,7 @@ async function readBody(req: NextRequest, signal: AbortSignal): Promise<Partial<
   const chunks: Uint8Array[] = [];
   let size = 0;
   try {
+    if (signal.aborted) { cancel(); signal.throwIfAborted(); }
     while (true) {
       const { value, done } = await reader.read();
       signal.throwIfAborted();
@@ -93,11 +94,17 @@ export async function POST(req: NextRequest) {
     controller.abort(); reject(new Error("Request deadline"));
   }; });
   const timer = setTimeout(() => expire!(), REQUEST_TIMEOUT_MS);
+  const disconnected = () => expire!();
+  req.signal.addEventListener("abort", disconnected, { once: true });
+  if (req.signal.aborted) disconnected();
   try {
     return await Promise.race([explain(req, controller.signal), expired]);
   } catch {
     return respond({ error: "Could not generate a verified explanation. Please try again later." }, { status: 502 });
-  } finally { clearTimeout(timer); }
+  } finally {
+    clearTimeout(timer);
+    req.signal.removeEventListener("abort", disconnected);
+  }
 }
 
 async function explain(req: NextRequest, signal: AbortSignal) {

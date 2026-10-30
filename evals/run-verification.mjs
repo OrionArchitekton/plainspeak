@@ -24,10 +24,9 @@ if (dryRun) {
 } else {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('Provide the existing authorized key through the process environment; do not save or print it.');
   const output = resolve(args[1]);
-  await mkdir(output, { recursive: true });
+  // Reserve a new private leaf; reject existing paths, including symlinks.
+  await mkdir(output, { mode: 0o700 });
   const receipt = join(output, 'results.json');
-  // Exclusive creation prevents overwriting an earlier evaluation.
-  await writeFile(receipt, '[]\n', { flag: 'wx', mode: 0o600 });
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 50000, maxRetries: 0 });
   const results = [];
   for (const { test, input, inputSha256 } of entries) {
@@ -67,8 +66,8 @@ if (dryRun) {
     }
     results.push(result);
     await writeFile(join(output, test.name + '.json'), JSON.stringify(result, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
-    await writeFile(receipt, JSON.stringify(results, null, 2) + '\n', { mode: 0o600 });
     console.log(JSON.stringify({ name: result.name, elapsedMs: result.elapsedMs, metProtocolExpectation: result.metProtocolExpectation }));
   }
+  await writeFile(receipt, JSON.stringify(results, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
   if (results.some(result => !result.metProtocolExpectation)) process.exitCode = 1;
 }

@@ -33,6 +33,42 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("explanation privacy boundary", () => {
+  it("refuses an already disconnected request and cancels its unread body", async () => {
+    const caller = new AbortController();
+    caller.abort();
+    const cancel = vi.fn();
+    const body = new ReadableStream({ cancel });
+    const incoming = new NextRequest("http://localhost/api/explain", { method: "POST", body, signal: caller.signal });
+    expect((await POST(incoming)).status).toBe(502);
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(create).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+  it("does not start verification after the reader disconnects during generation", async () => {
+    vi.useFakeTimers();
+    try {
+      const caller = new AbortController();
+      let finish!: (value: unknown) => void;
+      create.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+      const incoming = new NextRequest("http://localhost/api/explain", {
+        method: "POST", body: JSON.stringify({ document: "A rule." }), signal: caller.signal,
+      });
+      const pending = POST(incoming);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(create).toHaveBeenCalledTimes(1);
+      caller.abort();
+      finish({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({
+        plain: "Late private draft", affects_you: [{ point: "A rule", severity: "high" }], questions: ["One?", "Two?", "Three?"],
+      }) }] });
+      const response = await pending;
+      await vi.runAllTimersAsync();
+      expect(response.status).toBe(502);
+      expect(await response.text()).not.toContain("private draft");
+      expect(create.mock.calls[0][1].signal.aborted).toBe(true);
+      expect(audit).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
   it("does not start an audit if a stalled draft resolves after expiry", async () => {
     vi.useFakeTimers();
     try {

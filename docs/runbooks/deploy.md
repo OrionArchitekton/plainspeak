@@ -38,7 +38,7 @@ The explanation function allows 60 seconds. A shared 55-second request deadline
 covers body reads, rate-limit lookup and both the draft and audit calls. The
 provider client uses a 50-second per-call timeout and no automatic retries; both
 calls also receive the shared abort signal. Each output budget is 2,000 tokens.
-Expiry aborts the active provider call and returns a generic no-store error;
+Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
 an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
 timeouts separately from application 502 errors. Do not raise the token budget or
@@ -78,11 +78,15 @@ Before production, run the six fictional audit cases in
 evals/run-verification.mjs --dry-run` first. A live run requires explicitly approved
 provider usage and the existing server key supplied securely in the process
 environment; never paste or persist it. Use `--output-dir` with a new private
-receipt directory. The harness runs at most six audit calls, no retries,50 seconds
+receipt directory. The harness runs at most six audit calls, no retries, 50 seconds
 and 2,000 output tokens per call. It records actual usage/latency and raw fictional
 audits privately. Truncation or malformed output is a protocol failure, not proof
 of semantic rejection. Inspect each audit against its source and preserved bad
 answer; source-preserving positive controls test false rejection, not prose quality.
+The harness creates a new private output directory and refuses existing paths.
+Individual case receipts are written once; the aggregate is written once after
+all six calls. An interrupted run retains its case receipts and must not be
+automatically repeated to replace missing aggregate evidence.
 
 Measure full two-call requests locally or in an authenticated preview before
 production. Do not create protection-bypass tokens or export credentials merely
