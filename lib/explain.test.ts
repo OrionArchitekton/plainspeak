@@ -69,13 +69,20 @@ describe("buildSystemPrompt", () => {
     expect(sys).toContain("Do not add a cap's lookback period to a refund rule");
     expect(sys).toContain("Preserve document-stated prices, deductions and duplicate-charge amounts");
     expect(sys).toMatch(/payment history is not established.*do not substitute a fixed amount.*numeric cap illustration/);
+    expect(sys).toContain("Every numeric cap illustration must state its assumed payments");
   });
 
   it("keeps late-refund outcomes conditional and exclusions limited to their own rule", () => {
     const sys = buildSystemPrompt({ ...workshopRequest, readingLevel: "child" });
-    expect(sys).toContain("Normally no refund for late cancellation, unless");
+    expect(sys).toContain("name only the source rule's own trigger and default outcome");
     expect(sys).toContain("include every overriding condition and deadline in that sentence");
     expect(sys).toContain("ordinary rights still apply");
+  });
+
+  it("does not mandate a cancellation trigger for an unrelated refund exception", () => {
+    const sys = buildSystemPrompt({ document: "Used downloads are nonrefundable unless the file is corrupt.", readingLevel: "plain" });
+    expect(sys).not.toContain("Normally no refund for late cancellation");
+    expect(sys).toContain("name only the source rule's own trigger and default outcome");
   });
 
   it("preserves included coverage and does not turn event order into a cause", () => {
@@ -91,6 +98,13 @@ describe("buildSystemPrompt", () => {
     expect(sys).toContain("Only for a cap the document defines by fees actually paid");
     expect(sys).toContain("Preserve fixed numeric caps stated in the document and their exceptions");
     expect(buildUserPrompt(request)).toContain(request.document);
+  });
+
+  it("preserves source deadlines and the scope of procedural requirements", () => {
+    const sys = buildSystemPrompt({ ...workshopRequest, readingLevel: "child" });
+    expect(sys).toContain("Do not introduce computed calendar-date deadlines");
+    expect(sys).toContain("that specific requirement is stated in the source");
+    expect(sys).toContain("only for its documented trigger");
   });
 });
 

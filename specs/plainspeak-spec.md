@@ -29,10 +29,16 @@ affected party. Plainspeak closes that comprehension gap.
    facts. Document-stated prices, deductions and duplicate-charge amounts remain
    intact; a cap's reference period must not be added to a refund rule.
    Payment-based caps retain their formula and reference period in every
-   restatement; an unknown payment history must not become an assumed fixed cap
-   or numeric illustration calculated from the periodic price.
+   restatement; an unknown payment history must not become an assumed fixed cap.
+   A numeric illustration must explicitly retain its assumed payments and the
+   reference period every time its amount is repeated; it is not the reader's
+   actual cap or a fixed cap stated by the document.
    Fixed numeric caps stated in a document keep their amount and exceptions;
    they must not be made dependent on a payment history absent that source rule.
+   Relative deadlines and stated cutoff times stay as written. Guidance forbids
+   computed calendar-date deadlines and invented request methods, keeps notice
+   requirements attached to their own communication, and limits refund denials
+   to the triggers actually stated by the document.
 2. **Personalized impact.** Given an optional "your situation" note, the "what affects
    you" list is tailored to that reader, with each item ranked high / medium / low so the
    most consequential clauses surface first.
