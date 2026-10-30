@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { auditAllowsDraft, verificationInput, VERIFICATION_PROMPT } from '../lib/verification.ts';
+import { buildVerificationRequest, inspectAudit, verificationInput, verificationReport } from '../lib/verification.ts';
 
 const args = process.argv.slice(2);
 const dryRun = args.length === 1 && args[0] === '--dry-run';
@@ -33,33 +33,16 @@ if (dryRun) {
     const started = performance.now();
     let result;
     try {
-      const message = await client.messages.create({
-        model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6', max_tokens: 2000,
-        temperature: 0, system: VERIFICATION_PROMPT,
-        messages: [{ role: 'user', content: JSON.stringify(input) }],
-      }, { signal: AbortSignal.timeout(50000) });
-      const text = message.content.filter(block => block.type === 'text').map(block => block.text).join('\n');
-      const allowed = message.stop_reason === 'end_turn' && auditAllowsDraft(text, input);
+      const message = await client.messages.create(buildVerificationRequest(process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6', input), { signal: AbortSignal.timeout(50000) });
+      const text = verificationReport(message);
+      const { allowed, complete } = text === null ? { allowed: false, complete: false } : inspectAudit(text, input);
       let judgment;
       try { judgment = JSON.parse(text); } catch { judgment = null; }
-      const sameIds = (actual, expected) => Array.isArray(actual) && actual.length === expected.length && new Set(actual).size === actual.length && actual.every(id => expected.includes(id));
-      const complete = message.stop_reason === 'end_turn' && Array.isArray(judgment?.sourceChecks) &&
-        sameIds(judgment.sourceChecks.map(row => row?.sourceId), input.sourceUnits.map(unit => unit.id)) &&
-        sameIds(judgment.reviewedDraftIds, input.draftUnits.map(unit => unit.id)) &&
-        Array.isArray(judgment.issues) && judgment.issues.every(issue => typeof issue === 'string' && issue.trim()) &&
-        judgment.sourceChecks.every(row => {
-          if (!Array.isArray(row.draftIds) || new Set(row.draftIds).size !== row.draftIds.length ||
-              !row.draftIds.every(id => input.draftUnits.some(unit => unit.id === id))) return false;
-          if (row.status === 'context') return row.draftIds.length === 0;
-          if (row.status === 'issue') return true;
-          return row.status === 'covered' && row.draftIds.length > 0 &&
-            row.draftIds.every(id => input.draftUnits.some(unit => unit.id === id && unit.kind !== 'question'));
-        });
       const explicitRejection = complete && judgment?.verdict === 'reject' && Array.isArray(judgment.issues) && judgment.issues.length > 0;
-      result = { name: test.name, expected: test.expected, inputSha256, elapsedMs: Math.round(performance.now() - started), stopReason: message.stop_reason,
+      result = { name: test.name, expected: test.expected, inputSha256, elapsedMs: Math.round(performance.now() - started), model: message.model, stopReason: message.stop_reason,
         usage: { inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens }, allowed, complete,
         metProtocolExpectation: test.expected === 'pass' ? allowed : explicitRejection,
-        audit: judgment, rawAudit: text, semanticReviewRequired: true };
+        audit: judgment, rawAudit: message.content, semanticReviewRequired: true };
     } catch {
       // Provider exception text can contain private request/provider details.
       result = { name: test.name, expected: test.expected, inputSha256, elapsedMs: Math.round(performance.now() - started), error: 'Provider evaluation failed', metProtocolExpectation: false, semanticReviewRequired: true };

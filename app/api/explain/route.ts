@@ -9,7 +9,7 @@ import {
   type ExplainRequest,
   type ReadingLevel,
 } from "@/lib/explain";
-import { auditAllowsDraft, verificationInput, VERIFICATION_PROMPT } from "@/lib/verification";
+import { auditAllowsDraft, buildVerificationRequest, verificationInput, verificationReport } from "@/lib/verification";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -214,17 +214,10 @@ async function explain(req: NextRequest, signal: AbortSignal) {
     }
     const input = verificationInput(request, explanation);
     signal.throwIfAborted();
-    const audit = await client.messages.create({
-      model: MODEL,
-      max_tokens: 2000,
-      temperature: 0,
-      system: VERIFICATION_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(input) }],
-    }, { signal });
-    if (audit.stop_reason !== "end_turn") throw new Error("Incomplete verification");
-    const auditText = audit.content.filter(b => b.type === "text")
-      .map(b => (b as { text: string }).text).join("\n");
-    if (!auditAllowsDraft(auditText, input)) {
+    const audit = await client.messages.create(buildVerificationRequest(MODEL, input), { signal });
+    if (audit.stop_reason !== "tool_use" && audit.stop_reason !== "end_turn") throw new Error("Incomplete verification");
+    const auditText = verificationReport(audit);
+    if (auditText === null || !auditAllowsDraft(auditText, input)) {
       return respond({ error: "Could not verify that this explanation preserves the document's rules and exceptions. Please check the original text." }, { status: 422 });
     }
     const res = respond(explanation);

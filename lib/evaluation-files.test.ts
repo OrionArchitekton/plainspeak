@@ -37,6 +37,7 @@ it("writes private case receipts and one final aggregate with a fake provider", 
   const output = await prepare();
   await import("../evals/run-verification.mjs");
   expect(create).toHaveBeenCalledTimes(6);
+  expect(create.mock.calls.every(call => call[0].tool_choice?.name === "record_audit" && call[0].tool_choice.disable_parallel_tool_use === true)).toBe(true);
   expect((await stat(output)).mode & 0o077).toBe(0);
   const files = await readdir(output);
   expect(files).toHaveLength(7);

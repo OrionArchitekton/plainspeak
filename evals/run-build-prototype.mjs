@@ -14,6 +14,7 @@ export async function collectBuildPrototype({ audit, post, requests, emit }) {
     const audits = await audit();
     if (!Array.isArray(audits) || audits.length !== 6) throw new Error('Incomplete audit batch');
     emit('audits', audits);
+    if (audits.some(result => result?.metProtocolExpectation !== true)) throw new Error('Audit prerequisite failed');
     for (const { name, request } of requests) {
       const start = performance.now();
       let result;

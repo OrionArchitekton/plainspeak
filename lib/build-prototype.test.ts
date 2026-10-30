@@ -28,6 +28,17 @@ it("stops before application requests when audit collection is incomplete", asyn
   expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ collectionComplete: false });
 });
 
+it("retains a failed six-audit batch and spends no calls on full requests", async () => {
+  const audits = Array.from({ length: 6 }, (_, i) => ({ metProtocolExpectation: i !== 2 }));
+  const post = vi.fn();
+  const emit = vi.fn();
+  const requests = ["refunds", "liability", "warranty"].map(name => ({ name, request: {} }));
+  await expect(collectBuildPrototype({ audit: async () => audits, post, requests, emit })).rejects.toThrow("publication stopped intentionally");
+  expect(emit).toHaveBeenCalledWith("audits", audits);
+  expect(post).not.toHaveBeenCalled();
+  expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ collectionComplete: false });
+});
+
 it("rejects conflicting receipt frames and accepts identical log duplicates", () => {
   const frames = encodeBuildReceipt("audits", { data: "Fixture" }, "fictional-credential");
   expect(decodeBuildReceipts([...frames, ...frames], { allowIncomplete: true })).toEqual({ records: { audits: { data: "Fixture" } }, collectionComplete: false });

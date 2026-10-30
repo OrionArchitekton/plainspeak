@@ -73,6 +73,17 @@ prevent missing audit rows, not dishonest or mistaken model judgments. The publi
 privacy/advice notice still applies. Do not log bodies, drafts, audit reasons or
 keys, and do not add automatic retries for refusals.
 
+The audit now records one completed `record_audit` tool response containing source
+coverage and a separate evidence-backed check with a concise reason for every
+draft unit. This is a response format only: the application executes no tool and
+makes no follow-up model call. Free-text or fenced JSON, missing/extra/wrong tool
+calls, incomplete output and invalid evidence fail closed. The evaluator uses
+the same request builder, response reader and report validator as the app. A
+complete valid report still requires semantic review; structure cannot establish
+whether its reasons are true. The initial cloud prototype wrongly approved all
+three preserved bad answers inside fenced text. Do not deploy by merely removing
+those fences or treating those protocol refusals as accurate rejection.
+
 Before production, run the six fictional audit cases in
 `evals/fixtures/verification-cases.json` using `node --experimental-strip-types
 evals/run-verification.mjs --dry-run` first. A live run requires explicitly approved
@@ -117,6 +128,9 @@ before submitting; identify the one job with unique metadata and retain its URL.
 
 The runner makes six audit calls through the existing bounded harness and invokes
 the compiled POST handler for the original three requests, at most two calls each.
+It retains all six audits and stops before full requests if any audit protocol
+expectation fails. This is an intentionally incomplete full collection; decode
+with `allowIncomplete` to inspect the preserved batch, without repeating it.
 The limiter is disabled only inside this isolated test process to avoid touching
 shared counters. Neither the key nor other project credentials are exported.
 Synthetic receipts are redacted and split into bounded integrity-checked frames

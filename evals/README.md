@@ -60,6 +60,15 @@ invalid/truncated output is not semantic success; accepting accurate controls do
 not prove simplification quality. Three full local two-call requests and the final
 unchanged public-app requests remain separate acceptance surfaces.
 
+The app and evaluator share the single named audit response format and validation.
+Inspect each draft unit's source evidence and specific comparison reason, as well
+as source coverage. A list of reviewed IDs or a bare positive judgment cannot pass.
+Retain the provider's returned model identity, raw content blocks and usage in the
+private evaluation receipts. The first cloud run's six fenced outputs all failed
+the wire protocol, and their internal judgments incorrectly passed all three bad
+answers. A parser-only change would not repair that semantic failure. The revised
+format must be measured against the same unchanged cases before any release.
+
 When separately approved, `run-build-prototype.mjs --vercel-build-only` runs the
 same bounded evaluation with Vercel's existing production configuration, followed
 by three compiled POST-handler requests. It always stops build publication. This
@@ -68,3 +77,9 @@ receipt frames can be reconstructed with the exported `decodeBuildReceipts`;
 missing/conflicting frames fail validation. See the operator runbook for the
 exact target, approval, call ceiling and public-alias checks. Full deployed HTTP
 and desktop/mobile proof remain mandatory.
+
+The cloud runner stops before the three full requests if any of the six audit
+protocol expectations fails. All audit receipts remain available; the decoder
+then intentionally reports the full collection as incomplete. This early stop
+saves calls but does not establish semantic success, even when every protocol
+expectation passes. Review the actual reasons before release.
