@@ -36,7 +36,13 @@ const PREFIX = 'PLAINSPEAK_PROTO_V1 ';
 const RECORDS = new Set(['started', 'audits', 'partial-audits', 'error', 'finished', 'request-refunds', 'request-liability', 'request-warranty']);
 export function encodeBuildReceipt(record, value, secret) {
   if (!RECORDS.has(record) || typeof secret !== 'string' || !secret) throw new Error('Invalid receipt parameters');
-  const bytes = Buffer.from(JSON.stringify(value).replaceAll(secret, '[REDACTED]'));
+  const redact = item => {
+    if (typeof item === 'string') return item.replaceAll(secret, '[REDACTED]');
+    if (Array.isArray(item)) return item.map(redact);
+    if (item && typeof item === 'object') return Object.fromEntries(Object.entries(item).map(([key, entry]) => [redact(key), redact(entry)]));
+    return item;
+  };
+  const bytes = Buffer.from(JSON.stringify(redact(JSON.parse(JSON.stringify(value)))));
   const hash = createHash('sha256').update(bytes).digest('hex');
   const data = bytes.toString('base64');
   const count = Math.ceil(data.length / 2048);

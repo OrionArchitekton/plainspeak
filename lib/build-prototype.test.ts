@@ -86,6 +86,13 @@ it("recovers complete, redacted receipts from bounded log frames", () => {
   expect(() => decodeBuildReceipts(frames.slice(1), { allowIncomplete: true })).toThrow();
 });
 
+it.each(['fictional-quote"slash\\suffix', ':'])("redacts escaped fictional secrets in values and keys without corrupting JSON: %s", secret => {
+  const value = { [secret]: { nested: [`prefix${secret}suffix`] } };
+  const frames = encodeBuildReceipt("audits", value, secret);
+  const decoded = decodeBuildReceipts(frames, { allowIncomplete: true });
+  expect(decoded.records.audits).toEqual({ "[REDACTED]": { nested: ["prefix[REDACTED]suffix"] } });
+});
+
 it("validates a complete record set separately from its semantic outcomes", () => {
   const records = {
     started: { providerCallCeiling: 12 }, audits: Array.from({ length: 6 }, () => ({ metProtocolExpectation: false })),
