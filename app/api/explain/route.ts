@@ -9,10 +9,12 @@ import {
   type ExplainRequest,
   type ReadingLevel,
 } from "@/lib/explain";
+import { auditAllowsDraft, verificationInput, VERIFICATION_PROMPT } from "@/lib/verification";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 const PROVIDER_TIMEOUT_MS = 50000;
+const REQUEST_TIMEOUT_MS = 55000;
 
 function respond(body: unknown, init: ResponseInit = {}) {
   const response = NextResponse.json(body, init);
@@ -27,14 +29,17 @@ const MAX_BODY_BYTES = 128 * 1024;
 
 class BodyTooLarge extends Error {}
 
-async function readBody(req: NextRequest): Promise<Partial<ExplainRequest>> {
+async function readBody(req: NextRequest, signal: AbortSignal): Promise<Partial<ExplainRequest>> {
   if (!req.body) throw new SyntaxError("Missing body");
   const reader = req.body.getReader();
+  const cancel = () => { void reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", cancel, { once: true });
   const chunks: Uint8Array[] = [];
   let size = 0;
   try {
     while (true) {
       const { value, done } = await reader.read();
+      signal.throwIfAborted();
       if (done) break;
       size += value.byteLength;
       if (size > MAX_BODY_BYTES) {
@@ -44,6 +49,7 @@ async function readBody(req: NextRequest): Promise<Partial<ExplainRequest>> {
       chunks.push(value);
     }
   } finally {
+    signal.removeEventListener("abort", cancel);
     reader.releaseLock();
   }
   const bytes = new Uint8Array(size);
@@ -81,6 +87,20 @@ function clientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const controller = new AbortController();
+  let expire: (() => void) | undefined;
+  const expired = new Promise<never>((_, reject) => { expire = () => {
+    controller.abort(); reject(new Error("Request deadline"));
+  }; });
+  const timer = setTimeout(() => expire!(), REQUEST_TIMEOUT_MS);
+  try {
+    return await Promise.race([explain(req, controller.signal), expired]);
+  } catch {
+    return respond({ error: "Could not generate a verified explanation. Please try again later." }, { status: 502 });
+  } finally { clearTimeout(timer); }
+}
+
+async function explain(req: NextRequest, signal: AbortSignal) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return respond(
@@ -91,7 +111,7 @@ export async function POST(req: NextRequest) {
 
   let body: Partial<ExplainRequest>;
   try {
-    body = await readBody(req);
+    body = await readBody(req, signal);
   } catch (error) {
     if (error instanceof BodyTooLarge) {
       return respond({ error: "Request body is too large (max 128 KiB)." }, { status: 413 });
@@ -165,14 +185,16 @@ export async function POST(req: NextRequest) {
   const client = new Anthropic({ apiKey, timeout: PROVIDER_TIMEOUT_MS, maxRetries: 0 });
 
   try {
+    signal.throwIfAborted();
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 2000,
       temperature: 0,
       system: buildSystemPrompt(request),
       messages: [{ role: "user", content: buildUserPrompt(request) }],
-    }, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
+    }, { signal });
 
+    if (msg.stop_reason !== "end_turn") throw new Error("Incomplete draft generation");
     const text = msg.content
       .filter((b) => b.type === "text")
       .map((b) => (b as { text: string }).text)
@@ -182,6 +204,21 @@ export async function POST(req: NextRequest) {
     if (!explanation.plain || explanation.affectsYou.length === 0 ||
         explanation.questions.length < 3 || explanation.questions.length > 5) {
       throw new Error("Incomplete explanation");
+    }
+    const input = verificationInput(request, explanation);
+    signal.throwIfAborted();
+    const audit = await client.messages.create({
+      model: MODEL,
+      max_tokens: 2000,
+      temperature: 0,
+      system: VERIFICATION_PROMPT,
+      messages: [{ role: "user", content: JSON.stringify(input) }],
+    }, { signal });
+    if (audit.stop_reason !== "end_turn") throw new Error("Incomplete verification");
+    const auditText = audit.content.filter(b => b.type === "text")
+      .map(b => (b as { text: string }).text).join("\n");
+    if (!auditAllowsDraft(auditText, input)) {
+      return respond({ error: "Could not verify that this explanation preserves the document's rules and exceptions. Please check the original text." }, { status: 422 });
     }
     const res = respond(explanation);
     res.headers.set("X-RateLimit-Active", String(ratelimit !== null));

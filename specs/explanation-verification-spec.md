@@ -1,0 +1,17 @@
+# Explanation verification
+
+Dan approved a separate verification step on 2026-10-30 after three deployed prompt-only repairs failed the unchanged workshop case. This implements that choice; no general factual-accuracy guarantee is made.
+
+## Scenarios and acceptance
+
+1. A reader submits a valid document. Plainspeak generates one draft, then sends the original source and the entire normalized draft to a separate model call. The audit checks source-rule coverage, exceptions attached to each restatement, deadlines/request methods, actual-paid formulas, causation and unsupported procedural requirements. It checks personalized impacts as well as the plain explanation; questions cannot substitute for missing coverage.
+2. An approved audit accounts for every source unit and draft unit exactly once using server-assigned identifiers. Each source unit is either covered with valid draft references or explicitly non-operative context. Every draft unit is reviewed. Unknown/duplicate/missing identifiers, malformed judgments, empty evidence for covered rules, any reported issue or a rejection prevent publication. Identifier and evidence checks establish audit structure, not semantic truth.
+3. A rejected, incomplete, truncated or unavailable audit yields a clear non-cacheable error with no draft or provider/audit details. The app shows its existing error state. It never falls back to the draft, retries automatically, or displays an answer before audit completion. A valid audit preserves the existing successful response shape. Invalid requests and rate-limit denials still avoid both model calls.
+4. A request uses at most two model calls, without SDK retries. Draft and audit each retain a bounded output budget. One shared invocation budget under the existing 60-second function allowance covers body reading, optional limiter, draft and audit; expiry aborts provider work and returns a generic no-store error. The implementation must not start an audit after expiry. No credentials, environment settings or deployment protection change.
+5. Evaluation uses the unchanged workshop/subscription/warranty requests and their preserved bad answers. Before production, actual prototype measurements must show whether the independent audit rejects those failures, accepts accurate controls and fits latency/usage limits. Stubbed unit audits cannot establish model correctness. Production completion requires the same real requests and desktop/mobile consumer readback; report whether each returned an accurate verified explanation or explicitly refused it.
+
+## Test seams and tradeoffs
+
+The primary automated seam is the existing POST handler with a stubbed provider: it verifies that no draft crosses the API boundary before a complete positive audit, including failure and deadline paths. Small pure tests cover audit parsing and identifier checks. Actual model semantic checks are a separate measured prototype/deployed seam and must retain unsuccessful results. Models can approve flawed drafts or reject accurate ones; this reduces exposure but cannot prove completeness or professional suitability.
+
+This adds one provider call per successful draft, more latency and recurring usage, explicitly approved by Dan. No new service or dependency is required. Existing privacy/advice notices remain accurate. Source and draft remain server/provider data, with no application persistence or new body logs. Rollback is a normal source revert or restoration of the previous approved deployment.

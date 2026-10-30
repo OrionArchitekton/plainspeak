@@ -58,11 +58,14 @@ affected party. Plainspeak closes that comprehension gap.
 
 ## Test seam
 
-Live generation has a 60-second function allowance and one provider attempt with
-a 50-second timeout and abort signal. The 2,000-token output limit is unchanged.
-Provider failures still use the existing generic, non-cacheable API error; the
-additional time allows detailed responses to finish beyond the prior 30-second
-platform cutoff. This is a bounded provider call, not a retry loop.
+Live generation has a 60-second function allowance and a shared 55-second request
+deadline for preparation, one draft call and one independent audit call. Each
+provider call has a 50-second client timeout, receives the shared abort signal,
+and retains a 2,000-token output limit without retries. Provider/deadline failures
+use generic, non-cacheable errors; a rejected or incomplete audit withholds the
+draft. The POST boundary is the primary seam for this publication gate; see
+[explanation verification](explanation-verification-spec.md). Real model accuracy
+and two-call latency still require measured evaluation.
 
 Core explanation behavior is exercised at one seam: the pure `lib/explain.ts` module
 (`buildSystemPrompt`, `buildUserPrompt`, `parseExplanation`) under Vitest. This is where

@@ -46,3 +46,16 @@ Repeat `fixtures/subscription-liability.json` unchanged, including the detailed 
 ## Warranty regression
 
 Repeat `fixtures/warranty-exclusions.json` unchanged at the plain reading level and original situation. Retain twelve months from delivery and manufacturing-defect coverage including **both parts and labor**, with repair/replacement at the provider's choice. Preserve the original-cartridge/intact-original-seal-at-failure carve-back and refilled-cartridge exclusion. Third-party repair excludes only damage it caused; prior repair followed by a leak does not establish that the events are causally related or unrelated. Preserve the documented shipping reimbursement up to $20 only after a confirmed manufacturing defect, and the $35 inspection fee only when no manufacturing defect is found AND prior written consent was given. Do not turn possible inspection/dispute procedures into source-established facts. Inspect the actual response and settled desktop/mobile render; omission of covered parts and labor is a regression even if exclusions are retained.
+
+## Independent audit prototype
+
+`verification-cases.json` contains three actual unsuccessful responses from
+production merge 5ea5739 and three source-preserving positive controls. They are
+fictional, offline evidence, not live answers. The bounded harness is
+`node --experimental-strip-types evals/run-verification.mjs --dry-run`; with
+explicit provider/key-use authority, pass `--output-dir` pointing to a new private
+directory. It makes six audit calls without retries and records latency, tokens,
+raw audits and protocol outcomes. Inspect meaning manually. Rejection caused by
+invalid/truncated output is not semantic success; accepting accurate controls does
+not prove simplification quality. Three full local two-call requests and the final
+unchanged public-app requests remain separate acceptance surfaces.
