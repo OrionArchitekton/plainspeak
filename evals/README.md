@@ -59,3 +59,12 @@ raw audits and protocol outcomes. Inspect meaning manually. Rejection caused by
 invalid/truncated output is not semantic success; accepting accurate controls does
 not prove simplification quality. Three full local two-call requests and the final
 unchanged public-app requests remain separate acceptance surfaces.
+
+When separately approved, `run-build-prototype.mjs --vercel-build-only` runs the
+same bounded evaluation with Vercel's existing production configuration, followed
+by three compiled POST-handler requests. It always stops build publication. This
+is an alternative to local key access, not an automatic CI step. Its synthetic
+receipt frames can be reconstructed with the exported `decodeBuildReceipts`;
+missing/conflicting frames fail validation. See the operator runbook for the
+exact target, approval, call ceiling and public-alias checks. Full deployed HTTP
+and desktop/mobile proof remain mandatory.

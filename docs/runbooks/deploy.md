@@ -100,3 +100,37 @@ response and desktop/mobile state. A refusal must show the clear error and no
 draft, with no silent fallback. Report each accurate explanation or refusal
 individually. Roll back through a normal revert/restoration of the previous approved
 deployment; no environment, database or protection change is required.
+
+## Optional build-only cloud prototype
+
+Use this only with explicit authority for the exact reviewed commit and a fresh
+12-call ceiling. It is an alternative when the existing write-only credentials
+cannot be supplied to a local runtime. Never execute it from default CI or a timer.
+
+In the existing Plainspeak project, override the build command for one test build
+only: `pnpm build && node --experimental-strip-types evals/run-build-prototype.mjs
+--vercel-build-only`. Use the production environment so the existing configured
+key/model are injected by Vercel, and disable domain assignment with
+`--prod --skip-domain`. Do not change project settings or environment values.
+Verify the team, project, approved commit, clean upload and current public alias
+before submitting; identify the one job with unique metadata and retain its URL.
+
+The runner makes six audit calls through the existing bounded harness and invokes
+the compiled POST handler for the original three requests, at most two calls each.
+The limiter is disabled only inside this isolated test process to avoid touching
+shared counters. Neither the key nor other project credentials are exported.
+Synthetic receipts are redacted and split into bounded integrity-checked frames
+in test build logs. Collect authenticated log events, decode their receipt frames
+with `decodeBuildReceipts`, retain the results privately and inspect every answer.
+The default decoder requires the complete record set; explicit `allowIncomplete`
+decoding labels a partial collection as incomplete. A failed audit subprocess
+retains completed individual case receipts as partial evidence. Missing or
+conflicting frames cannot establish a result. Preserve a partial run;
+never resubmit an uncertain job or repeat its calls without new authority.
+
+The runner exits unsuccessfully even when collection succeeds, intentionally
+preventing publication. The expected Vercel state is ERROR for this test job, not
+READY. Verify that the original public alias still points to its captured baseline.
+A test build is not a release, a model pass or a browser check. Review protocol,
+semantic outcomes, token usage and two-call timings before admitting a normal
+release. Default builds still use the ordinary build command and no live test calls.
