@@ -52,17 +52,22 @@ affected party. Plainspeak closes that comprehension gap.
    own guardrail both state this is not professional advice; the application does not persist document contents. Live requests send the document and optional situation to Anthropic; provider and host retention are separate boundaries and disclosed before submission.
 
 7. **Private responses.** Explanation and error responses request no-store caching. Provider exception details are never returned to the browser. The UI warns before submission that this is not legal or medical advice and that content is sent to Anthropic.
-8. **Invalid requests.** With the service configured, non-object JSON, non-string documents or situation fields, blank documents, documents longer than 16,000 characters and situations longer than 1,000 characters return 400 without a model call. Bodies exceeding 128 KiB return 413 before JSON parsing or quota use, including streamed bodies and ignored fields; the byte limit is enforced independently of Content-Length.
+8. **Invalid requests.** With the service configured, non-object JSON, non-string documents or situation fields, blank documents, documents longer than 16,000 characters, documents with more than 24 sentence/nonempty-line units, and situations longer than 1,000 characters return 400 without a model call. Bodies exceeding 128 KiB return 413 before JSON parsing or quota use, including streamed bodies and ignored fields; the byte limit is enforced independently of Content-Length.
 
 9. **Output and limits.** Success requires a nonempty explanation, at least one nonempty impact point and three to five nonempty questions. The prompt's three-to-six impact-point target is guidance, not a guarantee of factual completeness. Unknown reading levels fall back to Plain English; a blank optional situation is allowed. Invalid input does not consume a rate-limit slot. A configured limiter that is unavailable or returns a malformed result returns 503 without a model call; a denied limit returns 429 with a retry interval. Allowed responses identify the active limiter and remaining slots. Without limiter settings, the service is unthrottled and requires separate access and spend controls before public use.
 
 ## Test seam
 
-Live generation has a 60-second function allowance and one provider attempt with
-a 50-second timeout and abort signal. The 2,000-token output limit is unchanged.
-Provider failures still use the existing generic, non-cacheable API error; the
-additional time allows detailed responses to finish beyond the prior 30-second
-platform cutoff. This is a bounded provider call, not a retry loop.
+Live generation has a 150-second function allowance and a shared 135-second request
+deadline for preparation, one draft call and one independent audit call. Each
+draft has a 50-second client timeout and the audit 80 seconds; both receive the shared abort signal,
+and runs without retries. The draft retains a 2,000-token ceiling; the independent
+Opus 4.6 audit has 4,096 including a 1,024-token thinking target. The generation
+model setting affects the draft only. Drafts over 32 normalized units are withheld before the audit call. Provider/deadline failures
+use generic, non-cacheable errors; a rejected or incomplete audit withholds the
+draft. The POST boundary is the primary seam for this publication gate; see
+[explanation verification](explanation-verification-spec.md). Real model accuracy
+and two-call latency still require measured evaluation.
 
 Core explanation behavior is exercised at one seam: the pure `lib/explain.ts` module
 (`buildSystemPrompt`, `buildUserPrompt`, `parseExplanation`) under Vitest. This is where

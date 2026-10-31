@@ -46,3 +46,53 @@ Repeat `fixtures/subscription-liability.json` unchanged, including the detailed 
 ## Warranty regression
 
 Repeat `fixtures/warranty-exclusions.json` unchanged at the plain reading level and original situation. Retain twelve months from delivery and manufacturing-defect coverage including **both parts and labor**, with repair/replacement at the provider's choice. Preserve the original-cartridge/intact-original-seal-at-failure carve-back and refilled-cartridge exclusion. Third-party repair excludes only damage it caused; prior repair followed by a leak does not establish that the events are causally related or unrelated. Preserve the documented shipping reimbursement up to $20 only after a confirmed manufacturing defect, and the $35 inspection fee only when no manufacturing defect is found AND prior written consent was given. Do not turn possible inspection/dispute procedures into source-established facts. Inspect the actual response and settled desktop/mobile render; omission of covered parts and labor is a regression even if exclusions are retained.
+
+## Independent audit prototype
+
+verification-cases.json preserves the three bad production answers and three
+accurate controls, with their original source requests. Do not edit fixtures or
+labels to obtain a pass. Malformed, truncated or unavailable output is not a
+semantic rejection. Every defect must be genuine; positive controls reproduce
+the source and preserve impact qualifications, rather than proving simplification
+quality. All original acceptance criteria above remain in force.
+
+The evaluator and app share the pinned Opus 4.6 audit builder and response reader,
+with a 1,024-token thinking target inside 4,096 output tokens and one required
+report. Auto tool choice permits reasoning; a missing report still refuses. The draft
+retains its configured model and its own 2,000-token cap. No new key/environment
+setting is needed. A model change is a hypothesis, not evidence of accuracy.
+
+Run `node --experimental-strip-types evals/run-verification.mjs --dry-run` without
+provider calls. Explicit live use needs approved existing-key/provider authority
+and `--output-dir NEW_PRIVATE_PATH`; an existing leaf is rejected before calls.
+The harness makes exactly six attempts, no retries, at most 80 seconds each, and
+retains input hashes, returned model identity, raw reports, usage and latency.
+Unknown usage is not zero. Checks of references/quotes/format do not establish
+whether a semantic judgment is true.
+
+The audit compares collective source coverage and each unit's local conditions.
+Other paragraphs and questions cannot cure an unconditional claim. It must not
+assume independent causes are exclusive, confuse due with paid, invent a mandatory
+inspection, or turn unknown causation into a negative causal claim. Reasons and
+quoted defects stay bounded; full affirmative per-unit evidence is still required.
+
+For cloud measurements, use the nonpublishing build runner in the operator
+runbook. First select audits-only for six calls. After every actual audit passes
+protocol and manual semantic review, requests-only invokes the three unchanged
+compiled requests at that identical source head for at most six further calls.
+Bind both native jobs and receipts; cumulative prototype use remains at most 12.
+Each phase alone is incomplete full evidence. No repeated audits or automatic
+publication is implied. Failed and partial results must remain preserved.
+
+After all audit, paired timing/behavior and source checks pass, the existing
+conditional release authority can admit an ordinary production deployment. Then
+repeat the original three public-app requests once each and inspect the actual
+responses and settled desktop/mobile UI. A 200 must be accurate; a refusal must
+be clear and contain no draft. No deadline/provider failure passes the gate.
+
+A complete negative decision may contain only verdict reject and a genuine
+grounded issue. It can stop without coverage tables. If tables are supplied, they
+must remain structurally complete and valid. A pass still requires every existing
+coverage and positive-evidence check. No timeout or malformed witness counts as a
+correct semantic rejection. The prepared larger time/output budget is unmeasured;
+the current 12-call grant is exhausted and further evaluation needs new authority.

@@ -9,10 +9,13 @@ import {
   type ExplainRequest,
   type ReadingLevel,
 } from "@/lib/explain";
+import { MAX_SOURCE_UNITS, MAX_DRAFT_UNITS, sourceUnitCount, auditAllowsDraft, buildVerificationRequest, verificationInput, verificationReport } from "@/lib/verification";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 150;
 const PROVIDER_TIMEOUT_MS = 50000;
+const AUDIT_TIMEOUT_MS = 80000;
+const REQUEST_TIMEOUT_MS = 135000;
 
 function respond(body: unknown, init: ResponseInit = {}) {
   const response = NextResponse.json(body, init);
@@ -27,14 +30,18 @@ const MAX_BODY_BYTES = 128 * 1024;
 
 class BodyTooLarge extends Error {}
 
-async function readBody(req: NextRequest): Promise<Partial<ExplainRequest>> {
+async function readBody(req: NextRequest, signal: AbortSignal): Promise<Partial<ExplainRequest>> {
   if (!req.body) throw new SyntaxError("Missing body");
   const reader = req.body.getReader();
+  const cancel = () => { void reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", cancel, { once: true });
   const chunks: Uint8Array[] = [];
   let size = 0;
   try {
+    if (signal.aborted) { cancel(); signal.throwIfAborted(); }
     while (true) {
       const { value, done } = await reader.read();
+      signal.throwIfAborted();
       if (done) break;
       size += value.byteLength;
       if (size > MAX_BODY_BYTES) {
@@ -44,6 +51,7 @@ async function readBody(req: NextRequest): Promise<Partial<ExplainRequest>> {
       chunks.push(value);
     }
   } finally {
+    signal.removeEventListener("abort", cancel);
     reader.releaseLock();
   }
   const bytes = new Uint8Array(size);
@@ -81,6 +89,26 @@ function clientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const controller = new AbortController();
+  let expire: (() => void) | undefined;
+  const expired = new Promise<never>((_, reject) => { expire = () => {
+    controller.abort(); reject(new Error("Request deadline"));
+  }; });
+  const timer = setTimeout(() => expire!(), REQUEST_TIMEOUT_MS);
+  const disconnected = () => expire!();
+  req.signal.addEventListener("abort", disconnected, { once: true });
+  if (req.signal.aborted) disconnected();
+  try {
+    return await Promise.race([explain(req, controller.signal), expired]);
+  } catch {
+    return respond({ error: "Could not generate a verified explanation. Please try again later." }, { status: 502 });
+  } finally {
+    clearTimeout(timer);
+    req.signal.removeEventListener("abort", disconnected);
+  }
+}
+
+async function explain(req: NextRequest, signal: AbortSignal) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return respond(
@@ -91,7 +119,7 @@ export async function POST(req: NextRequest) {
 
   let body: Partial<ExplainRequest>;
   try {
-    body = await readBody(req);
+    body = await readBody(req, signal);
   } catch (error) {
     if (error instanceof BodyTooLarge) {
       return respond({ error: "Request body is too large (max 128 KiB)." }, { status: 413 });
@@ -117,6 +145,10 @@ export async function POST(req: NextRequest) {
       { error: `Document is too long (max ${MAX_DOC_CHARS} characters).` },
       { status: 400 },
     );
+  }
+
+  if (sourceUnitCount(document) > MAX_SOURCE_UNITS) {
+    return respond({ error: `Use a shorter excerpt with at most ${MAX_SOURCE_UNITS} sentences or nonempty lines.` }, { status: 400 });
   }
 
   const readingLevel: ReadingLevel = VALID_LEVELS.includes(
@@ -165,14 +197,16 @@ export async function POST(req: NextRequest) {
   const client = new Anthropic({ apiKey, timeout: PROVIDER_TIMEOUT_MS, maxRetries: 0 });
 
   try {
+    signal.throwIfAborted();
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 2000,
       temperature: 0,
       system: buildSystemPrompt(request),
       messages: [{ role: "user", content: buildUserPrompt(request) }],
-    }, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
+    }, { signal });
 
+    if (msg.stop_reason !== "end_turn") throw new Error("Incomplete draft generation");
     const text = msg.content
       .filter((b) => b.type === "text")
       .map((b) => (b as { text: string }).text)
@@ -182,6 +216,17 @@ export async function POST(req: NextRequest) {
     if (!explanation.plain || explanation.affectsYou.length === 0 ||
         explanation.questions.length < 3 || explanation.questions.length > 5) {
       throw new Error("Incomplete explanation");
+    }
+    const input = verificationInput(request, explanation);
+    if (input.draftUnits.length > MAX_DRAFT_UNITS) {
+      return respond({ error: "Could not verify this explanation. Please try a shorter excerpt." }, { status: 422 });
+    }
+    signal.throwIfAborted();
+    const audit = await client.messages.create(buildVerificationRequest(input), { signal, timeout: AUDIT_TIMEOUT_MS });
+    if (audit.stop_reason !== "tool_use" && audit.stop_reason !== "end_turn") throw new Error("Incomplete verification");
+    const auditText = verificationReport(audit);
+    if (auditText === null || !auditAllowsDraft(auditText, input)) {
+      return respond({ error: "Could not verify that this explanation preserves the document's rules and exceptions. Please check the original text." }, { status: 422 });
     }
     const res = respond(explanation);
     res.headers.set("X-RateLimit-Active", String(ratelimit !== null));
