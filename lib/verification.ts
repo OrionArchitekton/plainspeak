@@ -9,6 +9,7 @@ export const VERIFICATION_PROMPT = [
   "Unknown is not false: 'the sequence does not establish that A caused B' or 'the cause is unknown' preserves uncertainty. It does NOT assert 'A did not cause B' or 'the events are unrelated'. A prior event followed by damage proves neither causation nor its absence. Reader-reported facts may be applied conditionally without inventing a causal finding.",
   "An asserted requirement such as 'the provider must confirm this during inspection' or 'coverage is pending inspection' adds a procedural prerequisite unless the source states it. Do not excuse an unsupported must/required/pending condition as sensible caution or customary practice. A genuine question about a possible procedure, or advice to ask for clarification, does not impose that condition.",
   "Check payments actually established, conditional numeric assumptions and their reference periods, exact deadline inclusivity/day units/times, and notice scope. Do not assume full payment or a fixed cap. Keep every exception with its own rule: an exception to a monetary cap does not remove a separate exclusion unless the source says so. A no-refund statement must preserve all applicable overrides within that unit.",
+  "Before recording the audit, reason through each operative rule's branches. For each restatement, look for a counterexample: hold its stated conditions fixed and vary an omitted exception, cause, payment history or boundary time. If source and local draft then permit different outcomes, record the defect even if another unit correctly states the exception. Conversely, do not invent a defect when the local claim preserves uncertainty or equivalent conditions. Keep this comparison in thinking, not extra report fields; record only decisive quoted defects and compact evidence.",
   "Record issues FIRST, then compact source/draft checks, then the verdict, using record_audit once. Explain defects only: at most six decisive issues, each with a short exact quote (at most160characters) and reason (at most160characters). For missing content quote the omitted source text; for contradiction/unsupported claims quote the defective draft text. Never write reasons or prose for supported units. This tool records data only; no action is executed.",
   "Account for every source and draft ID exactly once. Supported draft claims need valid source IDs; genuine questions use question status. Covered source rules need valid plain/impact references, never questions. Context means non-operative boilerplate only and may cite reproduced boilerplate or have no references. Pass only with no issues and affirmative checks; reject actual defects. No fenced JSON or prose answer.",
 ].join("\n");
@@ -29,9 +30,14 @@ export type VerificationInput = ReturnType<typeof verificationInput>;
 export function buildVerificationRequest(model: string, input: VerificationInput): Anthropic.MessageCreateParamsNonStreaming {
   const ids = { type: "array", items: { type: "string" }, uniqueItems: true };
   return {
-    model, max_tokens: 2000, temperature: 0, system: VERIFICATION_PROMPT,
+    // Manual thinking is supported by the configured Sonnet 4.6 and installed SDK.
+    // Leave room for the compact report within the shared request deadline.
+    model, max_tokens: 4096, temperature: 1,
+    thinking: { type: "enabled", budget_tokens: 2048 }, system: VERIFICATION_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(input) }],
-    tool_choice: { type: "tool", name: "record_audit", disable_parallel_tool_use: true },
+    // Forcing a tool is incompatible with manual thinking. The response reader
+    // still requires exactly one completed named audit and never executes it.
+    tool_choice: { type: "auto", disable_parallel_tool_use: true },
     tools: [{ name: "record_audit", description: "Record decisive quoted defects first, then compact per-unit evidence and a verdict. No prose for successful checks. Equivalent paraphrases and explicit uncertainty are permitted. No action is executed.", input_schema: {
       type: "object", additionalProperties: false,
       properties: {

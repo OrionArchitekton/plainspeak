@@ -103,3 +103,11 @@ The 1a5d32a isolated-claim experiment failed and was removed. Free-text outcome
 labels could not safely be compared as literal strings; the model also still
 missed the bad subscription exception. Keep those failed receipts and the
 known four-of-six compact-audit result. The candidate is not release-ready.
+
+The financial-exception candidate uses the same configured model with bounded
+manual thinking before its compact audit: a 2,048-token thinking target inside a
+4,096-token total audit output ceiling. Draft output remains capped at 2,000.
+Thinking and auto tool selection do not change any fixture or expected outcome.
+A completed named audit remains mandatory. Inspect actual quoted defects and
+accurate controls, and require the full two-call request measurements within
+the shared deadline before admitting deployment. No retry or resampling is implied.

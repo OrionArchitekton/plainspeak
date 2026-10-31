@@ -57,7 +57,10 @@ describe("independent audit publication boundary", () => {
   });
   it("requires one completed named audit tool call without executing any tool", () => {
     const tool = { type: "tool_use" as const, id: "audit-1", name: "record_audit", input: validAudit() };
-    expect(verificationReport({ stop_reason: "tool_use", content: [tool] })).toBe(JSON.stringify(validAudit()));
+    const thinking = { type: "thinking" as const, thinking: "Fictional private comparison", signature: "fictional-signature" };
+    const redacted = { type: "redacted_thinking" as const, data: "fictional-encrypted-data" };
+    expect(verificationReport({ stop_reason: "tool_use", content: [thinking, redacted, tool] })).toBe(JSON.stringify(validAudit()));
+    expect(verificationReport({ stop_reason: "end_turn", content: [thinking, redacted] })).toBeNull();
     expect(verificationReport({ stop_reason: "max_tokens", content: [tool] })).toBeNull();
     expect(verificationReport({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify(validAudit()), citations: null }] })).toBeNull();
     expect(verificationReport({ stop_reason: "tool_use", content: [tool, tool] })).toBeNull();

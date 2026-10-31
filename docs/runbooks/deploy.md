@@ -37,7 +37,8 @@ Open `http://localhost:3000/?demo=lease`. Check the saved-example label, readabl
 The explanation function allows 60 seconds. A shared 55-second request deadline
 covers body reads, rate-limit lookup and both the draft and audit calls. The
 provider client uses a 50-second per-call timeout and no automatic retries; both
-calls also receive the shared abort signal. Each output budget is 2,000 tokens.
+calls also receive the shared abort signal. The draft output budget is 2,000 tokens;
+the audit ceiling is 4,096 tokens including its 2,048-token thinking target.
 Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
 an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
@@ -60,7 +61,8 @@ Use Vercel's deployment history to restore the previously approved deployment af
 ## Independent explanation audit
 
 The verified flow makes at most two model calls: one draft and one source audit,
-with no SDK retries and at most 2,000 output tokens each. A single 55-second budget
+with no SDK retries, at most 2,000 draft output tokens and 4,096 audit output
+tokens including a 2,048-token thinking target. A single 55-second budget
 covers request reading, the configured limiter and both calls under the existing
 60-second host allowance. The first call can consume most of this budget; an audit
 that cannot finish is refused. Monitor 422 verification refusals separately from
@@ -162,3 +164,14 @@ full two-call app timing/behavior and subsequent consumer proof are still needed
 A test build is not a release, a model pass or a browser check. Review protocol,
 semantic outcomes, token usage and two-call timings before admitting a normal
 release. Default builds still use the ordinary build command and no live test calls.
+
+The financial-exception repair enables manual thinking on the existing configured
+Sonnet 4.6 through the installed SDK. This mode is currently supported but deprecated
+for that model; revalidate compatibility before changing the configured model.
+Auto tool selection permits reasoning before the compact audit. A thinking block,
+plain-text reply or absent tool call never permits a draft. The application does
+not expose thinking or make additional calls. The larger output allowance can
+increase provider cost and latency; unchanged semantic controls and full paired
+request timings remain release gates. The shared deadline and retry policy stay
+unchanged. To revert this candidate, restore the reviewed source baseline and
+normal build command; never promote an intentionally failed prototype build.
