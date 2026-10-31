@@ -63,7 +63,7 @@ unchanged public-app requests remain separate acceptance surfaces.
 The app and evaluator share the single named audit response format and validation.
 Inspect each draft unit's source evidence and source coverage. Successful checks
 are compact; reasons and exact quotes are emitted for defects only, with at most
-six defects and 160 characters each for quote and reason. A list of reviewed IDs
+six defects, 160 characters per quote and 256 characters per reason. A list of reviewed IDs
 or a bare positive judgment cannot pass. Quote presence is a structural check,
 not proof that the claimed defect exists. Context may reference reproduced
 boilerplate; it cannot substitute for operative rule coverage.
@@ -105,8 +105,8 @@ missed the bad subscription exception. Keep those failed receipts and the
 known four-of-six compact-audit result. The candidate is not release-ready.
 
 The financial-exception candidate uses the same configured model with bounded
-manual thinking before its compact audit: a 2,048-token thinking target inside a
-4,096-token total audit output ceiling. Draft output remains capped at 2,000.
+manual thinking before its compact audit: a 1,024-token thinking target inside a
+3,072-token total audit output ceiling. Draft output remains capped at 2,000.
 Thinking and auto tool selection do not change any fixture or expected outcome.
 A completed named audit remains mandatory. Inspect actual quoted defects and
 accurate controls, and require the full two-call request measurements within

@@ -10,7 +10,8 @@ export const VERIFICATION_PROMPT = [
   "An asserted requirement such as 'the provider must confirm this during inspection' or 'coverage is pending inspection' adds a procedural prerequisite unless the source states it. Do not excuse an unsupported must/required/pending condition as sensible caution or customary practice. A genuine question about a possible procedure, or advice to ask for clarification, does not impose that condition.",
   "Check payments actually established, conditional numeric assumptions and their reference periods, exact deadline inclusivity/day units/times, and notice scope. Do not assume full payment or a fixed cap. Keep every exception with its own rule: an exception to a monetary cap does not remove a separate exclusion unless the source says so. A no-refund statement must preserve all applicable overrides within that unit.",
   "Before recording the audit, reason through each operative rule's branches. For each restatement, look for a counterexample: hold its stated conditions fixed and vary an omitted exception, cause, payment history or boundary time. If source and local draft then permit different outcomes, record the defect even if another unit correctly states the exception. Conversely, do not invent a defect when the local claim preserves uncertainty or equivalent conditions. Keep this comparison in thinking, not extra report fields; record only decisive quoted defects and compact evidence.",
-  "Record issues FIRST, then compact source/draft checks, then the verdict, using record_audit once. Explain defects only: at most six decisive issues, each with a short exact quote (at most160characters) and reason (at most160characters). For missing content quote the omitted source text; for contradiction/unsupported claims quote the defective draft text. Never write reasons or prose for supported units. This tool records data only; no action is executed.",
+  "Independent triggers can coexist unless the source expressly makes them mutually exclusive. When a source says X alone is insufficient, that does not mean X rules out a separate exception E. Test X together with E against each local denial or exclusion; do not silently read alone/without E into draft wording. A due date or obligation to pay never establishes actual payment. Test paid amounts both below and at the amount due when payment history is unstated.",
+  "Record issues FIRST, then compact source/draft checks, then the verdict, using record_audit once. Explain defects only: at most six decisive issues, each with a short exact quote (at most160characters) and reason (at most256characters). Quote an exact fragment of the cited source or defective draft; the issue category does not restrict which text may be quoted. Never write reasons or prose for supported units. This tool records data only; no action is executed.",
   "Account for every source and draft ID exactly once. Supported draft claims need valid source IDs; genuine questions use question status. Covered source rules need valid plain/impact references, never questions. Context means non-operative boilerplate only and may cite reproduced boilerplate or have no references. Pass only with no issues and affirmative checks; reject actual defects. No fenced JSON or prose answer.",
 ].join("\n");
 
@@ -32,8 +33,8 @@ export function buildVerificationRequest(model: string, input: VerificationInput
   return {
     // Manual thinking is supported by the configured Sonnet 4.6 and installed SDK.
     // Leave room for the compact report within the shared request deadline.
-    model, max_tokens: 4096, temperature: 1,
-    thinking: { type: "enabled", budget_tokens: 2048 }, system: VERIFICATION_PROMPT,
+    model, max_tokens: 3072, temperature: 1,
+    thinking: { type: "enabled", budget_tokens: 1024 }, system: VERIFICATION_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(input) }],
     // Forcing a tool is incompatible with manual thinking. The response reader
     // still requires exactly one completed named audit and never executes it.
@@ -44,8 +45,8 @@ export function buildVerificationRequest(model: string, input: VerificationInput
         issues: { type: "array", maxItems: 6, items: { type: "object", additionalProperties: false,
           required: ["kind", "sourceIds", "draftIds", "quote", "reason"], properties: {
             kind: { type: "string", enum: ["missing", "contradiction", "unsupported"] }, sourceIds: ids, draftIds: ids,
-            quote: { type: "string", minLength: 1, maxLength: 160, description: "Exact fragment of cited source for missing content; exact fragment of cited draft for a contradiction or unsupported assertion." },
-            reason: { type: "string", minLength: 1, maxLength: 160, description: "Concrete outcome difference or unsupported assertion. Equivalent wording or uncertainty alone is not a defect." },
+            quote: { type: "string", minLength: 1, maxLength: 160, description: "Exact fragment of any cited source or draft unit grounding this defect." },
+            reason: { type: "string", minLength: 1, maxLength: 256, description: "Concrete outcome difference or unsupported assertion. Equivalent wording or uncertainty alone is not a defect." },
           } } },
         draftChecks: { type: "array", items: { type: "object", additionalProperties: false, required: ["draftId", "status", "sourceIds"], properties: {
           draftId: { type: "string" }, status: { type: "string", enum: ["supported", "question", "issue"] },
@@ -80,12 +81,13 @@ export function inspectAudit(raw: string, input: VerificationInput): { complete:
     if (!audit.issues.every((issue: { kind?: unknown; sourceIds?: unknown; draftIds?: unknown; quote?: unknown; reason?: unknown } | null) => {
       if (!issue || typeof issue.kind !== "string" || !["missing", "contradiction", "unsupported"].includes(issue.kind) ||
           typeof issue.quote !== "string" || !issue.quote.trim() || issue.quote.length > 160 ||
-          typeof issue.reason !== "string" || !issue.reason.trim() || issue.reason.length > 160 ||
+          typeof issue.reason !== "string" || !issue.reason.trim() || issue.reason.length > 256 ||
           !refs(issue.sourceIds, input.sourceUnits) || !refs(issue.draftIds, input.draftUnits)) return false;
       const sourceIds = issue.sourceIds as string[], draftIds = issue.draftIds as string[], quote = issue.quote;
-      if (issue.kind === "missing") return input.sourceUnits.some(unit => sourceIds.includes(unit.id) && unit.text.includes(quote));
-      if (issue.kind === "contradiction" && sourceIds.length === 0) return false;
-      return input.draftUnits.some(unit => draftIds.includes(unit.id) && unit.text.includes(quote));
+      if (issue.kind !== "unsupported" && sourceIds.length === 0) return false;
+      if (issue.kind !== "missing" && draftIds.length === 0) return false;
+      return input.sourceUnits.some(unit => sourceIds.includes(unit.id) && unit.text.includes(quote)) ||
+        input.draftUnits.some(unit => draftIds.includes(unit.id) && unit.text.includes(quote));
     })) return invalid;
     const sameIds = (actual: unknown[], expected: string[]) => actual.length === expected.length &&
       new Set(actual).size === actual.length && actual.every(id => typeof id === "string" && expected.includes(id));

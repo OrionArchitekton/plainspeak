@@ -38,7 +38,7 @@ The explanation function allows 60 seconds. A shared 55-second request deadline
 covers body reads, rate-limit lookup and both the draft and audit calls. The
 provider client uses a 50-second per-call timeout and no automatic retries; both
 calls also receive the shared abort signal. The draft output budget is 2,000 tokens;
-the audit ceiling is 4,096 tokens including its 2,048-token thinking target.
+the audit ceiling is 3,072 tokens including its 1,024-token thinking target.
 Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
 an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
@@ -61,8 +61,8 @@ Use Vercel's deployment history to restore the previously approved deployment af
 ## Independent explanation audit
 
 The verified flow makes at most two model calls: one draft and one source audit,
-with no SDK retries, at most 2,000 draft output tokens and 4,096 audit output
-tokens including a 2,048-token thinking target. A single 55-second budget
+with no SDK retries, at most 2,000 draft output tokens and 3,072 audit output
+tokens including a 1,024-token thinking target. A single 55-second budget
 covers request reading, the configured limiter and both calls under the existing
 60-second host allowance. The first call can consume most of this budget; an audit
 that cannot finish is refused. Monitor 422 verification refusals separately from
@@ -77,8 +77,8 @@ keys, and do not add automatic retries for refusals.
 
 The audit now records one completed `record_audit` tool response containing source
 coverage and a compact evidence-backed check for every draft unit. Reasons are
-reserved for at most six decisive defects, with an exact quoted fragment and
-reason each limited to 160 characters. The server checks quotes against their
+reserved for at most six decisive defects, with an exact quoted fragment, with the
+quote limited to 160 characters and reason to 256 characters. The server checks quotes against their
 referenced source/draft units; it does not infer whether a complaint is true.
 Non-operative context may cite reproduced boilerplate or have no references.
 This is a response format only: the application executes no tool and
@@ -175,3 +175,9 @@ increase provider cost and latency; unchanged semantic controls and full paired
 request timings remain release gates. The shared deadline and retry policy stay
 unchanged. To revert this candidate, restore the reviewed source baseline and
 normal build command; never promote an intentionally failed prototype build.
+
+Rejection evidence may quote either cited source or draft, regardless of defect
+category. Quotes still must match exact referenced text. This changes rejection
+reporting only; any issue or negative/incomplete check still prevents publication.
+The smaller thinking target follows a measured 50-second audit timeout, not an
+assumption that shared two-call timing now fits. Re-measure before release.

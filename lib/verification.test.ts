@@ -23,6 +23,24 @@ describe("independent audit publication boundary", () => {
     report.issues[0].quote = "A guarantee absent from the actual draft";
     expect(inspectAudit(JSON.stringify(report), target)).toEqual({ complete: false, allowed: false });
   });
+  it("recognizes a missing-qualification rejection grounded in the defective draft quote", () => {
+    const target = verificationInput({ document: "Late cancellations are non-refundable unless the provider cancels or an evacuation blocks access.", readingLevel: "plain" }, {
+      plain: "No refund unless the provider cancels.", affectsYou: [], questions: [],
+    });
+    const report = { verdict: "reject", sourceChecks: [{ sourceId: "s0", status: "issue", draftIds: ["p0"] }],
+      draftChecks: [{ draftId: "p0", status: "issue", sourceIds: ["s0"] }],
+      issues: [{ kind: "missing", sourceIds: ["s0"], draftIds: ["p0"], quote: "No refund unless the provider cancels.", reason: "The local no-refund rule omits the evacuation exception." }] };
+    expect(inspectAudit(JSON.stringify(report), target)).toEqual({ complete: true, allowed: false });
+    report.issues[0].quote = "Words absent from every cited unit";
+    expect(inspectAudit(JSON.stringify(report), target)).toEqual({ complete: false, allowed: false });
+  });
+  it("requires source references for omissions and draft references for defective claims", () => {
+    const report = validAudit(); report.verdict = "reject";
+    report.issues = [{ kind: "unsupported", sourceIds: ["s1"], draftIds: [], quote: "Studio cancellation refunds all payments.", reason: "Test-only complaint with no identified draft claim." }];
+    expect(inspectAudit(JSON.stringify(report), input).complete).toBe(false);
+    report.issues[0] = { kind: "missing", sourceIds: [], draftIds: ["a0"], quote: "Studio cancellation refunds all payments.", reason: "Test-only omission with no identified source rule." };
+    expect(inspectAudit(JSON.stringify(report), input).complete).toBe(false);
+  });
   it("accepts a complete report and distinguishes a complete rejection from malformed output", () => {
     const audit = validAudit();
     expect(inspectAudit(JSON.stringify(audit), input)).toEqual({ complete: true, allowed: true });
@@ -36,10 +54,10 @@ describe("independent audit publication boundary", () => {
     const report = validAudit(); report.verdict = "reject";
     const issue = { kind: "unsupported", sourceIds: ["s0"], draftIds: ["p0"], quote: "Early cancellation refunds paid amounts", reason: "Test-only claimed defect." };
     if (flaw === "wrong draft") issue.draftIds = ["a0"];
-    if (flaw === "wrong source") { issue.kind = "missing"; issue.quote = "Studio cancellation refunds all payments."; }
+    if (flaw === "wrong source") { issue.kind = "missing"; issue.draftIds = []; issue.quote = "Studio cancellation refunds all payments."; }
     if (flaw === "unknown id") issue.sourceIds = ["s100"];
     if (flaw === "duplicate id") issue.draftIds = ["p0", "p0"];
-    if (flaw === "long reason") issue.reason = "x".repeat(161);
+    if (flaw === "long reason") issue.reason = "x".repeat(257);
     if (flaw === "empty quote") issue.quote = " ";
     report.issues = flaw === "too many issues" ? Array.from({ length: 7 }, () => issue) : [issue];
     expect(inspectAudit(JSON.stringify(report), input)).toEqual({ complete: false, allowed: false });
