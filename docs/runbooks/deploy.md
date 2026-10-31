@@ -38,7 +38,7 @@ The explanation function allows 60 seconds. A shared 55-second request deadline
 covers body reads, rate-limit lookup and both the draft and audit calls. The
 provider client uses a 50-second per-call timeout and no automatic retries; both
 calls also receive the shared abort signal. The draft output budget is 2,000 tokens;
-the audit output budget is also 2,000 tokens, with thinking disabled.
+the audit budget is 3,072 tokens including a 1,024-token thinking target.
 Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
 an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
@@ -61,9 +61,9 @@ Use Vercel's deployment history to restore the previously approved deployment af
 ## Independent explanation audit
 
 The generation model remains controlled by ANTHROPIC_MODEL (Sonnet 4.6 by
-default); the audit is pinned in source to Opus 4.6. Both calls have a 2,000-token
-output ceiling and zero retries. The audit has thinking disabled and returns one
-forced record_audit report, never an executed tool or a follow-up call. A shared
+default); the audit is pinned in source to Opus 4.6. The draft has a 2,000-token ceiling and audit 3,072 including a 1,024-token
+thinking target; neither retries. Auto tool selection allows reasoning before
+one required record_audit report, never an executed tool or a follow-up call. A shared
 55-second budget covers all request work within the 60-second host allowance.
 Opus has higher per-token rates; inspect actual latency and usage before release.
 A model migration alone cannot establish better decisions or safe paired timing.
@@ -86,8 +86,8 @@ Context classifications and semantic judgments remain fallible.
 Run the unchanged six-case harness only with authorized provider use:
 `node --experimental-strip-types evals/run-verification.mjs --dry-run` first,
 then `--output-dir NEW_PRIVATE_PATH`. Existing paths are refused. Live calls use
-the existing key in process memory, at most six calls, 50 seconds and 2,000 output
-tokens per call with no retries. Preserve raw fictional reports and actual usage.
+the existing key in process memory, at most six calls, 50 seconds and 3,072 output
+tokens per call including the thinking target, with no retries. Preserve raw fictional reports and actual usage.
 Compare every judgment against its source; malformed output is not semantic
 rejection. Accurate controls test false refusals, not simplification quality.
 
@@ -136,3 +136,8 @@ expected native state is ERROR and alias assignment false, even when a phase
 collects successfully. Verify the public alias still points to its captured
 baseline. Never promote or blindly redeploy a test job. Ordinary builds use the
 normal build command and make no live evaluation calls.
+
+The first thinking-disabled Opus batch completed quickly but approved every bad
+answer. The bounded-reasoning candidate remains unproven until its own unchanged
+audit and paired-request gates pass. Manual thinking is supported but deprecated
+for the pinned Opus 4.6; revalidate compatibility before a model migration.

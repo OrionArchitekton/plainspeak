@@ -14,8 +14,9 @@ hypothesis; neither the model choice nor structural checks guarantee accuracy.
    draft over 32 paragraph/impact/question units is withheld with 422 before the
    audit, bounding reporting work. A size bound does not guarantee output fits.
 2. The original source, situation and entire normalized draft go to a separate
-   Opus 4.6 call. Thinking is disabled, its output ceiling is 2,000 tokens and it
-   must return one completed named audit report. The audit checks collective
+   Opus 4.6 call. A 1,024-token reasoning target fits inside a 3,072-token output ceiling. It
+   must return one completed named audit report; auto tool selection allows the
+   reasoning step, while an absent report still refuses the draft. The audit checks collective
    coverage and each restatement's own conditions and exceptions. Coverage in
    another paragraph or a question cannot repair a locally unconditional rule.
    Independent triggers may coexist; a due amount never proves actual payment.
@@ -35,7 +36,8 @@ hypothesis; neither the model choice nor structural checks guarantee accuracy.
    generic no-store error with no draft, audit or provider details. No fallback,
    automatic retry or early draft display occurs. A valid positive audit retains
    the existing successful response shape. The application executes no tool.
-5. The draft and audit each allow 2,000 output tokens, at most two model calls and
+5. The draft allows 2,000 output tokens and audit 3,072 including reasoning,
+   at most two model calls and
    zero SDK retries. The shared 55-second deadline covers reading, optional
    limiter and both calls within the 60-second function allowance. Expiry or
    reader disconnection aborts work; no audit starts after cancellation. The
@@ -82,3 +84,16 @@ The audit adds recurring usage and latency as explicitly approved. No new servic
 SDK dependency, document persistence or application body logging is added.
 Privacy/advice notices still apply. Rollback is a reviewed source revert or
 restoration of the previous approved deployment, preserving settings and receipts.
+
+The initial Opus audit with thinking disabled passed all three bad answers, despite
+finishing within 11 seconds. It failed acceptance. The remaining six-call candidate
+uses bounded reasoning with the same pinned auditor. Each supported assertion
+must follow from the source for every scenario its own words permit; another
+paragraph or the situation cannot silently supply a missing exception. Manual
+thinking is currently supported but deprecated for Opus 4.6, so revalidate
+compatibility before model migration. It increases possible usage/latency; the
+shared deadline stays unchanged and actual measurements remain mandatory.
+
+Numbered clause labels remain attached to their text when counting source units.
+The same normalization is shared by admission and the actual audit input; the
+original six fixture hashes remain unchanged.

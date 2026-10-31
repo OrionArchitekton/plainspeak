@@ -61,9 +61,9 @@ affected party. Plainspeak closes that comprehension gap.
 Live generation has a 60-second function allowance and a shared 55-second request
 deadline for preparation, one draft call and one independent audit call. Each
 provider call has a 50-second client timeout, receives the shared abort signal,
-and retains a 2,000-token output limit without retries. The independent audit is
-pinned to Opus 4.6 with thinking disabled; the generation setting affects the draft
-only. Drafts over 32 normalized units are withheld before the audit call. Provider/deadline failures
+and runs without retries. The draft retains a 2,000-token ceiling; the independent
+Opus 4.6 audit has 3,072 including a 1,024-token thinking target. The generation
+model setting affects the draft only. Drafts over 32 normalized units are withheld before the audit call. Provider/deadline failures
 use generic, non-cacheable errors; a rejected or incomplete audit withholds the
 draft. The POST boundary is the primary seam for this publication gate; see
 [explanation verification](explanation-verification-spec.md). Real model accuracy

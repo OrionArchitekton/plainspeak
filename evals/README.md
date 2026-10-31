@@ -57,7 +57,8 @@ the source and preserve impact qualifications, rather than proving simplificatio
 quality. All original acceptance criteria above remain in force.
 
 The evaluator and app share the pinned Opus 4.6 audit builder and response reader,
-with thinking disabled, one forced report and a 2,000-token output cap. The draft
+with a 1,024-token thinking target inside 3,072 output tokens and one required
+report. Auto tool choice permits reasoning; a missing report still refuses. The draft
 retains its configured model and its own 2,000-token cap. No new key/environment
 setting is needed. A model change is a hypothesis, not evidence of accuracy.
 
