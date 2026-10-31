@@ -34,12 +34,13 @@ Open `http://localhost:3000/?demo=lease`. Check the saved-example label, readabl
 
 ## Consumer validation and monitoring
 
-The explanation function allows 60 seconds. The provider client uses a 50-second
-timeout, a matching abort signal and no automatic retries; its output budget
-remains 2,000 tokens. This reserves nominal headroom for the existing generic
-no-store error response if generation fails. The timer starts at the provider
-call, so it does not bound earlier body reads or rate-limit lookup; a slow earlier
-phase can still cause a platform timeout. Verify the deployed detailed fixture completes,
+The explanation function allows 150 seconds. A shared 135-second request deadline
+covers body reads, rate-limit lookup and both the draft and audit calls. The
+draft has a 50-second provider timeout and the audit 80 seconds, with no automatic retries; both
+calls also receive the shared abort signal. The draft output budget is 2,000 tokens;
+the audit budget is 4,096 tokens including a 1,024-token thinking target.
+Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
+an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
 timeouts separately from application 502 errors. Do not raise the token budget or
 add retry attempts to hide a timeout. A rollback returns to the prior function
@@ -56,3 +57,104 @@ For refund-branch and payment-based-cap regressions, repeat the workshop and sub
 ## Rollback
 
 Use Vercel's deployment history to restore the previously approved deployment after checking environment compatibility, or stop the local server with Ctrl+C. Stop external access if spend or privacy handling is unclear. No document database migration is involved. Preserve any rate-limit store settings separately; do not delete shared stores. Before selling a hosted tier, add and test authentication, enforceable quotas, billing/cancellation, spend limits and support terms under a separate implementation review.
+
+## Independent explanation audit
+
+The generation model remains controlled by ANTHROPIC_MODEL (Sonnet 4.6 by
+default); the audit is pinned in source to Opus 4.6. The draft has a 2,000-token ceiling and audit 4,096 including a 1,024-token
+thinking target; neither retries. Auto tool selection allows reasoning before
+one required record_audit report, never an executed tool or a follow-up call. A shared
+135-second budget covers all request work within the 150-second host allowance.
+Opus has higher per-token rates; inspect actual latency and usage before release.
+A model migration alone cannot establish better decisions or safe paired timing.
+
+At most 24 source sentence/nonempty-line units are admitted before quota or draft
+work; a normalized draft over 32 units is refused before auditing. The input page
+shows the excerpt limit. These bounds contain per-unit report size; truncation
+can still occur and never permits the draft. Monitor 422 refusals separately from
+provider/deadline 502 failures. Never log source, draft, audit details or keys.
+
+A positive audit must account for every source/draft identifier exactly once with valid
+references. A rejection may stop after one genuine grounded defect and omit the
+coverage tables. Invalid evidence withholds the draft but does not count as a
+correct semantic rejection. It emits at most six grounded defects, each quote at most 160
+characters and reason at most 256. Quotes may come from referenced source or draft
+regardless of defect category. Missing/contradiction defects identify source
+rules; contradiction/unsupported defects identify draft claims. Positive checks
+remain compact. Any negative, incomplete or malformed audit withholds the draft.
+A 200 means the model and structural checks passed, not a factual guarantee.
+Context classifications and semantic judgments remain fallible.
+
+Run the unchanged six-case harness only with authorized provider use:
+`node --experimental-strip-types evals/run-verification.mjs --dry-run` first,
+then `--output-dir NEW_PRIVATE_PATH`. Existing paths are refused. Live calls use
+the existing key in process memory, at most six calls, 80 seconds and 4,096 output
+tokens per call including the thinking target, with no retries. Preserve raw fictional reports and actual usage.
+Compare every judgment against its source; malformed output is not semantic
+rejection. Accurate controls test false refusals, not simplification quality.
+
+No release is admitted until all six audit decisions are correct, full paired
+requests fit the deadline and source review/CI pass. After conditional production
+release, repeat the original three requests through the actual public app and
+inspect responses and settled desktop/mobile state. Clear refusals must show no
+draft. No environment, protection, credential or database change is needed.
+Rollback through the prior approved deployment or a normal reviewed source revert.
+
+## Optional build-only cloud prototype
+
+Use only under explicit bounded provider authority for the existing Plainspeak
+project and reviewed source head. Never run from ordinary CI or a timer. Override
+the build command for one build only:
+`pnpm build && node --experimental-strip-types evals/run-build-prototype.mjs
+--vercel-build-only --audits-only`. Use production configuration and
+`--prod --skip-domain`; do not change project build settings or environment values.
+Verify team/project, clean upload, exact source, current alias and cumulative call
+ledger before submission. Identify each job with unique recovery metadata.
+
+The audits-only phase makes six unchanged audit calls and never invokes the app.
+Inspect all six actual judgments, including the financial exception witnesses,
+and their protocol/usage/timing. Only after manual admission of that exact source
+may a separate test build replace --audits-only with --requests-only. That phase
+makes only three original compiled POST requests, at most two model calls each,
+and never repeats audits. Bind both jobs to the identical source head and keep
+their combined ceiling at 12 calls. Conflicting flags are rejected. The original
+full mode remains available under a separate full 12-call plan, stopping before
+requests if any audit protocol expectation fails.
+
+Each phase emits started/finished receipts with its six-call ceiling and phase.
+Use decodeBuildReceipts with allowIncomplete for separate phases: auditBatchComplete
+and requestBatchComplete describe their own collection, while collectionComplete
+remains false without a full combined run. Receipt collection is separate from
+semantic acceptance. Require all expected records, exact phase, source identity,
+frame integrity and native job metadata; missing evidence never counts as a pass.
+Preserve partial/failed results and recover uncertain jobs by unique metadata,
+without repeating them or their calls.
+
+The limiter is disabled only in the isolated test process; project counters and
+settings remain intact. Existing credentials stay in Vercel. Synthetic receipts
+are redacted into bounded integrity-checked build-log frames and retained
+privately. The runner always exits unsuccessfully to prevent publication. The
+expected native state is ERROR and alias assignment false, even when a phase
+collects successfully. Verify the public alias still points to its captured
+baseline. Never promote or blindly redeploy a test job. Ordinary builds use the
+normal build command and make no live evaluation calls.
+
+The first thinking-disabled Opus batch completed quickly but approved every bad
+answer. The bounded-reasoning candidate remains unproven until its own unchanged
+audit and paired-request gates pass. Manual thinking is supported but deprecated
+for the pinned Opus 4.6; revalidate compatibility before a model migration.
+
+## Prepared latency repair (unmeasured)
+
+The measured reasoning candidate hit its 50-second provider limit for all three
+bad answers. Accurate controls took 25–38 seconds. The prepared repair shortens
+negative reporting and allows an 80-second audit, a 50-second draft, a 135-second
+shared budget and a 150-second function allowance. It retains two calls and zero
+retries, with up to 4,096 audit output tokens including the 1,024 thinking target.
+This changes maximum latency and possible provider/hosting usage; it is not an
+accuracy or speed claim. Actual six-audit and paired-request measurements still
+require a new explicit usage grant. Production remains unchanged.
+
+The current project has Fluid Compute enabled. Verify that the target plan permits
+the 150-second allowance before release; no billing/plan/settings change is
+authorized. See [Vercel duration limits](https://vercel.com/docs/functions/configuring-functions/duration).

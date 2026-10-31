@@ -131,12 +131,17 @@ export default function PlainspeakApp({
           </div>
 
           <textarea
+            aria-describedby="document-limits"
             value={doc}
             onChange={(e) => setDoc(e.target.value)}
             placeholder="Paste a lease, a medical letter, terms of service, a government form…"
             rows={7}
             className="w-full resize-y rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-white/90 outline-none transition placeholder:text-white/30 focus:border-violet-400/50"
           />
+
+          <p id="document-limits" className="mt-2 text-xs text-white/40">
+            Up to 16,000 characters. Keep excerpts to 24 sentences or nonempty lines.
+          </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
@@ -187,6 +192,12 @@ export default function PlainspeakApp({
               "Make it plain"
             )}
           </button>
+
+          {loading && (
+            <p role="status" className="mt-3 text-xs text-white/40">
+              Checking the document’s conditions and exceptions. This may take a couple of minutes.
+            </p>
+          )}
 
           {error && (
             <p className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">

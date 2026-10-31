@@ -1,0 +1,183 @@
+[
+  {
+    "name": "refunds-observed-bad",
+    "requestFile": "workshop-refunds.json",
+    "expected": "reject",
+    "provenance": "Actual public response from merge5ea5739; unchanged JSON payload",
+    "draft": {
+      "plain": "This is a made-up practice document about a pottery or craft workshop run by Marigold Bench Studio. Here is what it says in plain language.\n\nTHE PRICE AND PAYMENTS\nThe full price is $240. You pay $60 now as a deposit. That $60 is part of the $240 \u2014 not extra on top. You pay the remaining $180 no later than seven calendar days before January 24, 2027 at 10:00 UTC.\n\nIF YOU CANCEL FIVE DAYS BEFORE THE EVENT\nFive days before the event is fewer than seven calendar days before the start. That means your cancellation arrives too late for a refund. The rule says: cancellations received fewer than seven calendar days before the start are non-refundable. So if you cancel five days before, you would get nothing back \u2014 unless the Studio itself cancels (see below).\n\nIF THE STUDIO CANCELS\nIf the Studio cancels the workshop, you get every penny back \u2014 the $60 deposit, the $180 balance, and even the $12 booking fee. This override applies no matter when the Studio cancels, and it beats both of the normal cancellation rules.\n\nIF BAD WEATHER STOPS YOU GOING\nBad weather alone does not qualify for the special full-refund override. The document says so directly. This means bad weather on its own falls under the normal cancellation rules \u2014 and since you would be cancelling fewer than seven days before the event, that would be non-refundable. The document does not give you a separate weather refund right.\n\nIF AN OFFICIAL EVACUATION ORDER STOPS YOU GOING\nAn official evacuation order that actually prevents you from reaching the venue on the day of the event does qualify for a full refund, including the $12 booking fee. But two conditions must both be true: (1) there must be an official evacuation order \u2014 not just bad weather or a personal choice \u2014 and (2) you must give the Studio written notice before the scheduled start time of 10:00 UTC on January 24, 2027. If you miss that deadline or only have bad weather (not an evacuation order), this override does not apply.\n\nTHE $12 BOOKING FEE\nNormally, even a timely cancellation (seven or more days before) costs you a $12 booking fee \u2014 it is kept by the Studio and not refunded. Only the Studio-cancels override and the evacuation-order override give you that $12 back.\n\nHOW REFUNDS ARE PAID\nOnce you make a valid refund request, the Studio has ten business days to pay you. Business days usually means working days, not weekends or public holidays, but the document does not define this further.\n\nREMINDER: This is a fictional test document. It is not a real offer or agreement.",
+      "affectsYou": [
+        {
+          "point": "Cancelling five days before the event gets you nothing back. Five days is fewer than seven calendar days, so the non-refundable rule applies \u2014 you would lose the full $240 you paid, unless the Studio itself cancels.",
+          "severity": "high"
+        },
+        {
+          "point": "Bad weather alone does not trigger a refund. The document specifically excludes bad weather from the evacuation override, and a late cancellation for any other reason is also non-refundable. So bad weather on its own leaves you with no refund right under this document.",
+          "severity": "high"
+        },
+        {
+          "point": "An evacuation order gives you a full refund \u2014 but only if you send written notice to the Studio before 10:00 UTC on January 24, 2027. Miss that deadline and you lose the right to this override.",
+          "severity": "high"
+        },
+        {
+          "point": "If the Studio cancels, you get everything back including the $12 booking fee. This is the strongest protection in the document and overrides all other rules.",
+          "severity": "medium"
+        },
+        {
+          "point": "The remaining $180 is due seven calendar days before January 24, 2027 at 10:00 UTC. If you miss that payment, the document does not say what happens \u2014 that is a gap worth asking about.",
+          "severity": "medium"
+        },
+        {
+          "point": "Any refund is paid within ten business days of a valid refund request. The document does not define 'business days' or say how to submit a refund request, so it is worth confirming the process.",
+          "severity": "low"
+        }
+      ],
+      "questions": [
+        "If I cancel exactly seven calendar days before the 10:00 UTC start \u2014 does my written cancellation need to arrive before 10:00 UTC on that day to count as 'at least seven days', or is the whole day acceptable?",
+        "What counts as 'written notice' for an evacuation-order refund claim \u2014 is an email enough, or do you require a specific form or method?",
+        "What happens if I have not paid the $180 balance by the seven-day deadline \u2014 do I lose my place, lose my deposit, or is there a grace period?",
+        "If there is an official evacuation order but it is lifted before 10:00 UTC on January 24, 2027, would I still qualify for the evacuation refund?",
+        "How do I submit a refund request, and does the ten-business-day clock start from when I send the request or when you receive and approve it?"
+      ]
+    }
+  },
+  {
+    "name": "liability-observed-bad",
+    "requestFile": "subscription-liability.json",
+    "expected": "reject",
+    "provenance": "Actual public response from merge5ea5739; unchanged JSON payload",
+    "draft": {
+      "plain": "This is a fictional contract document for an invented service called Fable Harbor Workspace, a project-board subscription. It is not a real service or real legal agreement. Here is what the terms say:\n\n**What you're subscribing to and what it costs**\nThe subscription costs $30 per month. It renews automatically every month.\n\n**How to cancel**\nYou must cancel before 23:59 UTC on the calendar day before your next billing date. That is the cutoff \u2014 not midnight on your billing date, but the night before. If you cancel in time, the next charge does not happen, and you keep access until the end of the period you already paid for.\n\n**Refunds for cancellation**\nIf you cancel mid-month, you do not get a refund for the unused days. The document says payments are not refunded simply because you cancel early. However, there is one specific exception: if you were charged twice for the same thing (a duplicate charge), the duplicate amount is refunded in full \u2014 but only if you report it within 30 calendar days of that charge.\n\n**What the provider is liable for if something goes wrong \u2014 the general cap**\nIf the provider makes an ordinary mistake that causes you harm, the most they owe you is the total subscription fees you actually paid during the three months before you make your claim. At $30 per month, that would be up to $90 if you paid $30 each of those three months \u2014 but the actual cap depends on what you actually paid in that period, not a fixed $90.\n\n**When the general cap does not apply**\nThe three-month cap is lifted in two specific situations: (1) fraud by the provider, and (2) unauthorized disclosure of your confidential documents. In those two cases, the provider cannot hide behind the cap. However, lifting the cap does not automatically mean you can recover everything \u2014 the lost-profits exclusion is a separate rule that still applies on its own terms (see below).\n\n**Lost profits \u2014 a separate and important rule**\nThe document has a separate rule about lost profits (money your business loses because of the provider's actions). By default, you cannot recover lost profits at all. There is only one exception: you can recover lost profits if they were directly caused by the provider's fraud. That is the only override.\n\nThis means: if the provider makes an ordinary service mistake, you cannot recover lost profits. If the provider commits an unauthorized disclosure of your confidential documents \u2014 even though that lifts the liability cap \u2014 you still cannot recover lost profits, because unauthorized disclosure alone is not an exception to the lost-profits exclusion. The document states this explicitly. Only fraud that directly causes your lost profits opens the door to recovering them.\n\nTo be clear about how these two rules interact: beating the liability cap (because of fraud or unauthorized disclosure) does not automatically beat the lost-profits exclusion. Those are two separate hurdles. You need to clear each one independently.",
+      "affectsYou": [
+        {
+          "point": "Lost profits from an unauthorized disclosure of your design files are not recoverable. Even though unauthorized disclosure lifts the liability cap, the lost-profits exclusion still applies separately and is not overridden by that exception. If a leak of your confidential design work causes clients to cancel contracts with your studio, you likely cannot recover those lost profits under these terms.",
+          "severity": "high"
+        },
+        {
+          "point": "Lost profits are only recoverable if directly caused by the provider's fraud. For your studio, this matters most: if the provider's fraud directly causes you to lose client contracts or revenue, you can claim those lost profits. But for any other type of harm \u2014 ordinary mistakes or even unauthorized disclosure \u2014 lost profits are off the table.",
+          "severity": "high"
+        },
+        {
+          "point": "For ordinary service mistakes (not fraud, not unauthorized disclosure), the most you can recover is the subscription fees you actually paid in the three months before your claim. At $30/month, that is up to $90 if you paid $30 each of those three months \u2014 but the actual cap depends on your actual payment history in that period. If a service outage disrupts your studio's project delivery, your compensation is capped at that amount, and lost profits are excluded entirely.",
+          "severity": "high"
+        },
+        {
+          "point": "You must cancel before 23:59 UTC the calendar day before your next billing date to avoid being charged again. If you miss that cutoff by even a minute, you will be billed for another month. There are no refunds for cancelling mid-month, so timing your cancellation precisely matters for your studio's budget.",
+          "severity": "medium"
+        },
+        {
+          "point": "If you are ever charged twice in the same billing cycle, you can get the duplicate amount refunded in full \u2014 but you must report it within 30 calendar days of that charge. Missing that window means losing the right to that refund.",
+          "severity": "medium"
+        },
+        {
+          "point": "The liability cap does not apply to fraud or unauthorized disclosure of your confidential documents. For a design studio, your confidential project files and client work could qualify as confidential documents, so this exception is relevant \u2014 but remember, lifting the cap does not by itself let you recover lost profits.",
+          "severity": "low"
+        }
+      ],
+      "questions": [
+        "What exactly counts as 'confidential documents' under this agreement \u2014 would my client briefs, design files, and unreleased concepts be covered, and what security measures protect them from unauthorized disclosure?",
+        "If I cancel the day before my billing date, what timezone should I use to confirm the 23:59 UTC cutoff, and is there a confirmation I receive so I have proof I cancelled in time?",
+        "If an unauthorized disclosure of my studio's design work causes me to lose a client contract, is there any path to recovering those lost profits, or does the lost-profits exclusion apply absolutely in that scenario?",
+        "How do you define 'fraud' for the purpose of the lost-profits exception \u2014 what would I need to show to prove that my lost profits were directly caused by your fraud?",
+        "If I believe I have a claim, what is the process for making it, and is there a deadline by which I must bring a claim after the harm occurs?"
+      ]
+    }
+  },
+  {
+    "name": "warranty-observed-bad",
+    "requestFile": "warranty-exclusions.json",
+    "expected": "reject",
+    "provenance": "Actual public response from merge5ea5739; unchanged JSON payload",
+    "draft": {
+      "plain": "This is a fictional warranty document for a Cobalt Fern label printer. Here is what it says in plain English.\n\nThe warranty lasts twelve months from the day the printer is delivered. It covers manufacturing defects \u2014 meaning problems that came from how the printer was built \u2014 and it includes both parts and labor. If a defect is found, Cobalt Fern decides whether to repair or replace the printer; you do not get to choose.\n\nThree things are excluded: damage from dropping the printer, damage from liquid exposure, and damage caused by a third-party repair. That third exclusion is important for you: because someone other than Cobalt Fern previously repaired a roller, any damage that was caused by that repair is not covered. However, the warranty is not cancelled entirely. Manufacturing defects that are unrelated to the third-party repair remain covered. Whether your ink cartridge leak is related to the roller repair is not something this document decides \u2014 that causal link is uncertain and would need to be assessed during inspection.\n\nThere is a specific exception for liquid damage: if the leak came from the original factory-installed ink cartridge and that cartridge's original tamper seal is still intact at the time of the failure, the liquid damage is covered despite the general liquid-damage exclusion. Refilled cartridges do not qualify for this exception. Based on what you have described \u2014 an original factory-installed cartridge with its tamper seal intact \u2014 your situation appears to match the conditions for this exception, but Cobalt Fern would need to confirm that during inspection.\n\nReturn shipping: You pay the return shipping cost upfront. If Cobalt Fern confirms a manufacturing defect, they will reimburse your documented return shipping costs up to $20. If no defect is confirmed, the shipping cost is not reimbursed.\n\nInspection fee: A $35 fee applies only if two conditions are both true \u2014 no manufacturing defect is found, AND you agreed to that fee in writing before the inspection took place. If you did not consent in writing beforehand, the document does not authorize Cobalt Fern to charge you the $35 fee, even if no defect is found. The document does not describe any other charges.\n\nThis document does not cover refunds, cancellations, or any other financial arrangements beyond what is described above.",
+      "affectsYou": [
+        {
+          "point": "Your ink cartridge leak may be covered. The document has a specific exception: liquid damage from a leak in the original factory-installed ink cartridge is covered if the original tamper seal is intact when the failure happens. You have described exactly that situation. However, Cobalt Fern must confirm this during inspection \u2014 coverage is not automatic.",
+          "severity": "high"
+        },
+        {
+          "point": "The third-party roller repair creates a partial risk. Damage caused by that repair is excluded. The document does not say the roller repair caused the cartridge leak, and that causal link is uncertain \u2014 but Cobalt Fern could argue the leak was caused by the prior repair. If they make that finding, the liquid-damage exception would not help you and the claim could be denied.",
+          "severity": "high"
+        },
+        {
+          "point": "You must pay return shipping upfront. If a manufacturing defect is confirmed, Cobalt Fern reimburses documented return shipping costs up to $20. Keep your receipt. If no defect is confirmed, you are not reimbursed for shipping at all.",
+          "severity": "medium"
+        },
+        {
+          "point": "A $35 inspection fee can only be charged if no defect is found AND you agreed to it in writing before the inspection. Do not sign or consent to that fee in writing unless you understand that doing so authorizes the charge if no defect is found. If you have not yet consented in writing, the document does not authorize Cobalt Fern to charge you this fee.",
+          "severity": "medium"
+        },
+        {
+          "point": "Cobalt Fern chooses repair or replacement \u2014 not you. If your claim is approved, you cannot demand a specific remedy. The document does not promise any particular service timeline either.",
+          "severity": "low"
+        }
+      ],
+      "questions": [
+        "Will you inspect the tamper seal on the original factory-installed ink cartridge first, and confirm in writing whether it qualifies for the liquid-damage exception before any other assessment takes place?",
+        "If you find that the cartridge leak qualifies for the liquid-damage exception, will you also assess whether the third-party roller repair is related to the cartridge failure \u2014 and how will you document that finding?",
+        "Before I send the printer in, will you confirm in writing whether you are asking me to consent to the $35 inspection fee, and what happens if I do not consent?",
+        "What documentation do you require for me to be reimbursed for return shipping, and how and when will that reimbursement be paid if a defect is confirmed?"
+      ]
+    }
+  },
+  {
+    "name": "refunds-accurate-control",
+    "requestFile": "workshop-refunds.json",
+    "expected": "pass",
+    "provenance": "Source-preserving positive control, original source text plus accurate personalized point; verifies factual acceptance, not simplification quality or live output.",
+    "draft": {
+      "plain": "FICTIONAL TEST DOCUMENT. All names, events and terms are invented. Marigold Bench Studio offers a workshop on January 24, 2027 at 10:00 UTC. The total price is $240: a $60 deposit forms part of that total, and the remaining $180 is due seven calendar days before the workshop starts. If the customer's written cancellation reaches the Studio at least seven calendar days before the scheduled start, payments are refunded less a $12 booking fee. Cancellations received fewer than seven calendar days before the start are non-refundable. Despite those two cancellation rules, if the Studio cancels the workshop, all payments including the $12 booking fee are refunded. An official evacuation order that prevents access to the venue on the event day also qualifies for a full refund including the booking fee, but only if the customer gives written notice before the scheduled start. Bad weather alone and a change of mind do not qualify for that evacuation exception. Any refund due is paid within ten business days after a valid refund request. This document is not a real offer or agreement.",
+      "affectsYou": [
+        {
+          "point": "If you cancel five days before start, ordinarily no refund is due, unless the Studio cancels or an official evacuation order prevents access to the venue on the event day and you give written notice before the scheduled start. Those overrides refund all payments actually made, including the booking fee; no payment history is established here.",
+          "severity": "high"
+        }
+      ],
+      "questions": [
+        "How should I submit a claim or request?",
+        "Who can clarify the stated conditions?",
+        "Can you confirm how the documented rule applies?"
+      ]
+    }
+  },
+  {
+    "name": "liability-accurate-control",
+    "requestFile": "subscription-liability.json",
+    "expected": "pass",
+    "provenance": "Source-preserving positive control, original source text plus accurate personalized point; verifies factual acceptance, not simplification quality or live output.",
+    "draft": {
+      "plain": "FICTIONAL TEST DOCUMENT. Fable Harbor Workspace is an invented project-board subscription costing $30 per month. It renews monthly unless the customer cancels by 23:59 UTC on the calendar day before the next billing date. Cancellation stops the next renewal and access continues until the end of the current paid period. Payments are not refunded merely because the customer cancels mid-month. A duplicate charge is an exception: the duplicate amount is refunded in full if reported within thirty calendar days of that charge. Ordinary provider liability is capped at the subscription fees actually paid during the three months preceding the claim. That cap does not apply to fraud or to unauthorized disclosure of the customer's confidential documents. Separately, lost profits are excluded unless they were directly caused by the provider's fraud. Unauthorized disclosure alone is not an exception to the lost-profits exclusion. An exception to the liability cap does not, by itself, override the separate lost-profits exclusion. These are invented contractual terms only; no real service or legal rule is described.",
+      "affectsYou": [
+        {
+          "point": "For ordinary service mistakes, excluding provider fraud and unauthorized disclosure of confidential documents, liability is capped at subscription fees actually paid in the three months preceding the claim. Lost profits remain separately excluded unless directly caused by provider fraud. Disclosure without fraud removes the cap but does not remove that exclusion.",
+          "severity": "high"
+        }
+      ],
+      "questions": [
+        "How should I submit a claim or request?",
+        "Who can clarify the stated conditions?",
+        "Can you confirm how the documented rule applies?"
+      ]
+    }
+  },
+  {
+    "name": "warranty-accurate-control",
+    "requestFile": "warranty-exclusions.json",
+    "expected": "pass",
+    "provenance": "Source-preserving positive control, original source text plus accurate personalized point; verifies factual acceptance, not simplification quality or live output.",
+    "draft": {
+      "plain": "FICTIONAL TEST DOCUMENT. Cobalt Fern's invented label printer has a twelve-month warranty starting on delivery. Manufacturing defects are covered, including parts and labor; Cobalt Fern may choose repair or replacement. Damage caused by dropping the printer, liquid exposure or a third-party repair is excluded. However, liquid damage from a leak in the original factory-installed ink cartridge is covered if its original tamper seal is intact when the failure occurs; refilled cartridges do not qualify for that exception. Having a third-party repair does not cancel the whole warranty: only damage caused by that repair is excluded, and unrelated manufacturing defects remain covered. The customer initially pays return shipping. If a manufacturing defect is confirmed, Cobalt Fern reimburses documented return shipping up to $20; otherwise shipping is not reimbursed. A $35 inspection fee applies only when no manufacturing defect is found AND the customer consented to that fee in writing before inspection. No other charges or service availability promises appear here. All organizations and facts are fictional; this is not a real warranty.",
+      "affectsYou": [
+        {
+          "point": "A previous third-party repair does not void the whole warranty; only damage it caused is excluded. The earlier roller repair does not establish a causal relationship with the cartridge leak. The $35 inspection fee requires both no manufacturing defect and written consent before inspection.",
+          "severity": "high"
+        }
+      ],
+      "questions": [
+        "How should I submit a claim or request?",
+        "Who can clarify the stated conditions?",
+        "Can you confirm how the documented rule applies?"
+      ]
+    }
+  }
+]
