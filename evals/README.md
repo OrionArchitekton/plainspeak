@@ -88,13 +88,6 @@ missing/conflicting frames fail validation. See the operator runbook for the
 exact target, approval, call ceiling and public-alias checks. Full deployed HTTP
 and desktop/mobile proof remain mandatory.
 
-Each non-question draft check also records a short scenario plus source and
-isolated-claim outcomes before the verdict. Matching outcome labels are required
-for supported claims; choosing and interpreting the scenario remain model
-judgments. Apply the claim's own explicit scope, with no repairs imported from
-other units or the reader's situation. These probes do not prove exhaustive
-equivalence and still require the unchanged actual-model cases.
-
 The cloud runner stops before the three full requests if any of the six audit
 protocol expectations fails. All audit receipts remain available; the decoder
 then intentionally reports the full collection as incomplete. This early stop
@@ -105,3 +98,8 @@ An explicit `--audits-only` build-only invocation caps a partial-budget run at s
 audit calls, with no app calls even on success. Its `auditBatchComplete` field is
 separate from the intentionally incomplete full collection. It cannot replace
 the required full two-call app measurements or consumer readback.
+
+The 1a5d32a isolated-claim experiment failed and was removed. Free-text outcome
+labels could not safely be compared as literal strings; the model also still
+missed the bad subscription exception. Keep those failed receipts and the
+known four-of-six compact-audit result. The candidate is not release-ready.

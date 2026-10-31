@@ -8,21 +8,16 @@ const input = verificationInput({ document: "Early cancellation refunds payments
 });
 function validAudit() {
   return { verdict: "pass", issues: [] as { kind: string; sourceIds: string[]; draftIds: string[]; quote: string; reason: string }[], sourceChecks: input.sourceUnits.map(unit => ({ sourceId: unit.id, status: "covered", draftIds: ["p0"] })),
-    draftChecks: input.draftUnits.map(unit => ({ draftId: unit.id, probe: unit.kind === "question" ? [] : ["The stated cancellation condition applies", "The stated refund applies", "The stated refund applies"], status: unit.kind === "question" ? "question" : "supported", sourceIds: unit.kind === "question" ? [] : ["s0", "s1"] })) };
+    draftChecks: input.draftUnits.map(unit => ({ draftId: unit.id, status: unit.kind === "question" ? "question" : "supported", sourceIds: unit.kind === "question" ? [] : ["s0", "s1"] })) };
 }
 
 describe("independent audit publication boundary", () => {
-  it("refuses a positive checklist that declares different source and isolated-claim outcomes", () => {
-    const report = validAudit();
-    Object.assign(report.draftChecks[1], { probe: ["An overriding condition applies", "refund due", "no refund"] });
-    expect(inspectAudit(JSON.stringify(report), input).allowed).toBe(false);
-  });
   it("recognizes a complete rejection with an exact quoted defect and refuses invented witnesses", () => {
     const target = verificationInput({ document: "Refunds require written notice.", readingLevel: "plain" }, {
       plain: "A phone call guarantees a refund.", affectsYou: [{ point: "Your phone call guarantees a refund.", severity: "high" }], questions: ["Who accepts notice?"],
     });
     const report = { verdict: "reject", sourceChecks: [{ sourceId: "s0", status: "issue", draftIds: ["p0", "a0"] }],
-      draftChecks: target.draftUnits.map(unit => ({ draftId: unit.id, probe: unit.kind === "question" ? [] : ["Phone call only", "Written notice required", "Phone call suffices"], status: unit.kind === "question" ? "question" : "issue", sourceIds: unit.kind === "question" ? [] : ["s0"] })),
+      draftChecks: target.draftUnits.map(unit => ({ draftId: unit.id, status: unit.kind === "question" ? "question" : "issue", sourceIds: unit.kind === "question" ? [] : ["s0"] })),
       issues: [{ kind: "unsupported", sourceIds: ["s0"], draftIds: ["p0", "a0"], quote: "phone call guarantees a refund", reason: "Source requires written notice; a phone call is not specified." }] };
     expect(inspectAudit(JSON.stringify(report), target)).toEqual({ complete: true, allowed: false });
     report.issues[0].quote = "A guarantee absent from the actual draft";

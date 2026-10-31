@@ -149,11 +149,6 @@ retains completed individual case receipts as partial evidence. Missing or
 conflicting frames cannot establish a result. Preserve a partial run;
 never resubmit an uncertain job or repeat its calls without new authority.
 
-For an isolated-claim comparison, each non-question draft check records a compact
-scenario and source/local outcomes before the final verdict. Supported claims
-require matching outcomes. Probe strings are limited to 60 characters. The
-model's choice and interpretation of a scenario remain semantic judgments.
-
 The runner exits unsuccessfully even when collection succeeds, intentionally
 preventing publication. The expected Vercel state is ERROR for this test job, not
 READY. Verify that the original public alias still points to its captured baseline.
