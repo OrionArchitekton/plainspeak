@@ -58,11 +58,11 @@ affected party. Plainspeak closes that comprehension gap.
 
 ## Test seam
 
-Live generation has a 60-second function allowance and a shared 55-second request
+Live generation has a 150-second function allowance and a shared 135-second request
 deadline for preparation, one draft call and one independent audit call. Each
-provider call has a 50-second client timeout, receives the shared abort signal,
+draft has a 50-second client timeout and the audit 80 seconds; both receive the shared abort signal,
 and runs without retries. The draft retains a 2,000-token ceiling; the independent
-Opus 4.6 audit has 3,072 including a 1,024-token thinking target. The generation
+Opus 4.6 audit has 4,096 including a 1,024-token thinking target. The generation
 model setting affects the draft only. Drafts over 32 normalized units are withheld before the audit call. Provider/deadline failures
 use generic, non-cacheable errors; a rejected or incomplete audit withholds the
 draft. The POST boundary is the primary seam for this publication gate; see

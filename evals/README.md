@@ -57,7 +57,7 @@ the source and preserve impact qualifications, rather than proving simplificatio
 quality. All original acceptance criteria above remain in force.
 
 The evaluator and app share the pinned Opus 4.6 audit builder and response reader,
-with a 1,024-token thinking target inside 3,072 output tokens and one required
+with a 1,024-token thinking target inside 4,096 output tokens and one required
 report. Auto tool choice permits reasoning; a missing report still refuses. The draft
 retains its configured model and its own 2,000-token cap. No new key/environment
 setting is needed. A model change is a hypothesis, not evidence of accuracy.
@@ -65,7 +65,7 @@ setting is needed. A model change is a hypothesis, not evidence of accuracy.
 Run `node --experimental-strip-types evals/run-verification.mjs --dry-run` without
 provider calls. Explicit live use needs approved existing-key/provider authority
 and `--output-dir NEW_PRIVATE_PATH`; an existing leaf is rejected before calls.
-The harness makes exactly six attempts, no retries, at most 50 seconds each, and
+The harness makes exactly six attempts, no retries, at most 80 seconds each, and
 retains input hashes, returned model identity, raw reports, usage and latency.
 Unknown usage is not zero. Checks of references/quotes/format do not establish
 whether a semantic judgment is true.
@@ -89,3 +89,10 @@ conditional release authority can admit an ordinary production deployment. Then
 repeat the original three public-app requests once each and inspect the actual
 responses and settled desktop/mobile UI. A 200 must be accurate; a refusal must
 be clear and contain no draft. No deadline/provider failure passes the gate.
+
+A complete negative decision may contain only verdict reject and a genuine
+grounded issue. It can stop without coverage tables. If tables are supplied, they
+must remain structurally complete and valid. A pass still requires every existing
+coverage and positive-evidence check. No timeout or malformed witness counts as a
+correct semantic rejection. The prepared larger time/output budget is unmeasured;
+the current 12-call grant is exhausted and further evaluation needs new authority.

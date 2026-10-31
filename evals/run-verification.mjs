@@ -27,13 +27,13 @@ if (dryRun) {
   // Reserve a new private leaf; reject existing paths, including symlinks.
   await mkdir(output, { mode: 0o700 });
   const receipt = join(output, 'results.json');
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 50000, maxRetries: 0 });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 80000, maxRetries: 0 });
   const results = [];
   for (const { test, input, inputSha256 } of entries) {
     const started = performance.now();
     let result;
     try {
-      const message = await client.messages.create(buildVerificationRequest(input), { signal: AbortSignal.timeout(50000) });
+      const message = await client.messages.create(buildVerificationRequest(input), { signal: AbortSignal.timeout(80000) });
       const text = verificationReport(message);
       const { allowed, complete } = text === null ? { allowed: false, complete: false } : inspectAudit(text, input);
       let judgment;

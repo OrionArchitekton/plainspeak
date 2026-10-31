@@ -41,6 +41,18 @@ describe("independent audit publication boundary", () => {
     report.issues[0] = { kind: "missing", sourceIds: [], draftIds: ["a0"], quote: "Studio cancellation refunds all payments.", reason: "Test-only omission with no identified source rule." };
     expect(inspectAudit(JSON.stringify(report), input).complete).toBe(false);
   });
+  it("accepts a grounded short rejection but never a shortened approval", () => {
+    const report = { verdict: "reject", issues: [{ kind: "missing", sourceIds: ["s1"], draftIds: [], quote: "Studio cancellation refunds all payments.", reason: "A test-only omission witness." }] };
+    expect(inspectAudit(JSON.stringify(report), input)).toEqual({ complete: true, allowed: false });
+    expect(inspectAudit(JSON.stringify({ ...report, issues: [] }), input)).toEqual({ complete: false, allowed: false });
+    expect(inspectAudit(JSON.stringify({ verdict: "pass", issues: [] }), input)).toEqual({ complete: false, allowed: false });
+    report.issues[0].quote = "Invented fragment";
+    expect(inspectAudit(JSON.stringify(report), input)).toEqual({ complete: false, allowed: false });
+  });
+  it("does not count malformed optional rejection tables as a complete audit", () => {
+    const report = { verdict: "reject", issues: [{ kind: "missing", sourceIds: ["s1"], draftIds: [], quote: "Studio cancellation refunds all payments.", reason: "A test-only omission witness." }], sourceChecks: "malformed" };
+    expect(inspectAudit(JSON.stringify(report), input)).toEqual({ complete: false, allowed: false });
+  });
   it("accepts a complete report and distinguishes a complete rejection from malformed output", () => {
     const audit = validAudit();
     expect(inspectAudit(JSON.stringify(audit), input)).toEqual({ complete: true, allowed: true });

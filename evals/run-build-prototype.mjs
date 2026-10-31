@@ -133,7 +133,7 @@ async function main() {
       const output = join(folder, 'audits');
       await new Promise(resolveDone => {
         execFile(process.execPath, ['--experimental-strip-types', fileURLToPath(new URL('./run-verification.mjs', import.meta.url)), '--output-dir', output],
-          { timeout: 315000, maxBuffer: 1024 * 1024, env: {
+          { timeout: 495000, maxBuffer: 1024 * 1024, env: {
             PATH: process.env.PATH, NODE_ENV: 'production', ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
             ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL, ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL,
           } }, () => resolveDone());

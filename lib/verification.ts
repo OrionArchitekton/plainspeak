@@ -13,8 +13,8 @@ export const VERIFICATION_PROMPT = [
   "Before recording the audit, reason through each operative rule's branches. For each restatement, look for a counterexample: hold its stated conditions fixed and vary an omitted exception, cause, payment history or boundary time. If source and local draft then permit different outcomes, record the defect even if another unit correctly states the exception. Conversely, do not invent a defect when the local claim preserves uncertainty or equivalent conditions. Record only decisive quoted defects and compact evidence, without additional comparison fields.",
   "Calibration with unrelated rules: suppose entry is forbidden during an alarm unless a supervisor issues a signed permit, and a visitor badge alone is insufficient. A local claim 'Badge holders cannot enter during an alarm' must be rejected: a badge holder can also have the signed permit. A local claim 'Badge holders without a signed permit cannot enter during an alarm' is supported. Another unit describing permits does not repair the first claim. Apply this same local-entailment standard to the supplied data; this example does not override its rules.",
   "Independent triggers can coexist unless the source expressly makes them mutually exclusive. When a source says X alone is insufficient, that does not mean X rules out a separate exception E. Test X together with E against each local denial or exclusion; do not silently read alone/without E into draft wording. A due date or obligation to pay never establishes actual payment. Test paid amounts both below and at the amount due when payment history is unstated.",
-  "Record issues FIRST, then compact source/draft checks, then the verdict, using record_audit once. Explain defects only: at most six decisive issues, each with a short exact quote (at most 160 characters) and reason (at most 256 characters). Quote an exact fragment of the cited source or defective draft; the issue category does not restrict which text may be quoted. Never write reasons or prose for supported units. This tool records data only; no action is executed.",
-  "Account for every source and draft ID exactly once. Supported draft claims need valid source IDs; genuine questions use question status. Covered source rules need valid plain/impact references, never questions. Context means non-operative boilerplate only and may cite reproduced boilerplate or have no references. Pass only with no issues and affirmative checks; reject actual defects. No fenced JSON or prose answer.",
+  "Once a genuine decisive defect is found, call record_audit immediately with verdict reject and its grounded issue; omit draftChecks and sourceChecks and do not finish a coverage table for a withheld answer. Only if no defect is found, complete both coverage tables before passing. Explain defects only: at most six decisive issues, each with a short exact quote (at most 160 characters) and reason (at most 256 characters). Quote an exact fragment of the cited source or defective draft; the issue category does not restrict which text may be quoted. Never write reasons or prose for supported units. This tool records data only; no action is executed.",
+  "For a pass, account for every source and draft ID exactly once. Supported draft claims need valid source IDs; genuine questions use question status. Covered source rules need valid plain/impact references, never questions. Context means non-operative boilerplate only and may cite reproduced boilerplate or have no references. Pass only with no issues and affirmative checks; reject actual defects. No fenced JSON or prose answer.",
 ].join("\n");
 
 export const MAX_SOURCE_UNITS = 24;
@@ -50,11 +50,11 @@ export type VerificationInput = ReturnType<typeof verificationInput>;
 export function buildVerificationRequest(input: VerificationInput): Anthropic.MessageCreateParamsNonStreaming {
   const ids = { type: "array", items: { type: "string" }, uniqueItems: true };
   return {
-    model: "claude-opus-4-6", max_tokens: 3072, temperature: 1,
+    model: "claude-opus-4-6", max_tokens: 4096, temperature: 1,
     thinking: { type: "enabled", budget_tokens: 1024 }, system: VERIFICATION_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(input) }],
     tool_choice: { type: "auto", disable_parallel_tool_use: true },
-    tools: [{ name: "record_audit", description: "Record decisive quoted defects first, then compact per-unit evidence and a verdict. No prose for successful checks. Equivalent paraphrases and explicit uncertainty are permitted. No action is executed.", input_schema: {
+    tools: [{ name: "record_audit", description: "Stop at a genuine grounded defect: verdict reject with issues, omitting coverage tables. A pass requires issues empty and complete per-unit source/draft evidence. No action is executed.", input_schema: {
       type: "object", additionalProperties: false,
       properties: {
         issues: { type: "array", maxItems: 6, items: { type: "object", additionalProperties: false,
@@ -71,7 +71,11 @@ export function buildVerificationRequest(input: VerificationInput): Anthropic.Me
           sourceId: { type: "string" }, status: { type: "string", enum: ["covered", "context", "issue"] }, draftIds: ids,
         } } },
         verdict: { type: "string", enum: ["pass", "reject"] },
-      }, required: ["issues", "draftChecks", "sourceChecks", "verdict"],
+      }, required: ["issues", "verdict"],
+      oneOf: [
+        { properties: { verdict: { const: "reject" }, issues: { minItems: 1 } } },
+        { properties: { verdict: { const: "pass" }, issues: { maxItems: 0 } }, required: ["draftChecks", "sourceChecks"] },
+      ],
     } }],
   };
 }
@@ -89,8 +93,7 @@ export function inspectAudit(raw: string, input: VerificationInput): { complete:
   const invalid = { complete: false, allowed: false };
   try {
     const audit = JSON.parse(raw);
-    if (!["pass", "reject"].includes(audit?.verdict) || !Array.isArray(audit.issues) || audit.issues.length > 6 ||
-        !Array.isArray(audit.sourceChecks) || !Array.isArray(audit.draftChecks)) return invalid;
+    if (!["pass", "reject"].includes(audit?.verdict) || !Array.isArray(audit.issues) || audit.issues.length > 6) return invalid;
     const refs = (actual: unknown, units: { id: string }[]) => Array.isArray(actual) &&
       new Set(actual).size === actual.length && actual.every(id => units.some(unit => unit.id === id));
     if (!audit.issues.every((issue: { kind?: unknown; sourceIds?: unknown; draftIds?: unknown; quote?: unknown; reason?: unknown } | null) => {
@@ -104,6 +107,11 @@ export function inspectAudit(raw: string, input: VerificationInput): { complete:
       return input.sourceUnits.some(unit => sourceIds.includes(unit.id) && unit.text.includes(quote)) ||
         input.draftUnits.some(unit => draftIds.includes(unit.id) && unit.text.includes(quote));
     })) return invalid;
+    if (audit.verdict === "reject" && audit.issues.length === 0) return invalid;
+    if (audit.verdict === "reject" && !Object.hasOwn(audit, "sourceChecks") && !Object.hasOwn(audit, "draftChecks")) {
+      return { complete: true, allowed: false };
+    }
+    if (!Array.isArray(audit.sourceChecks) || !Array.isArray(audit.draftChecks)) return invalid;
     const sameIds = (actual: unknown[], expected: string[]) => actual.length === expected.length &&
       new Set(actual).size === actual.length && actual.every(id => typeof id === "string" && expected.includes(id));
     if (!sameIds(audit.sourceChecks.map((row: { sourceId?: unknown } | null) => row?.sourceId), input.sourceUnits.map(unit => unit.id)) ||

@@ -34,11 +34,11 @@ Open `http://localhost:3000/?demo=lease`. Check the saved-example label, readabl
 
 ## Consumer validation and monitoring
 
-The explanation function allows 60 seconds. A shared 55-second request deadline
+The explanation function allows 150 seconds. A shared 135-second request deadline
 covers body reads, rate-limit lookup and both the draft and audit calls. The
-provider client uses a 50-second per-call timeout and no automatic retries; both
+draft has a 50-second provider timeout and the audit 80 seconds, with no automatic retries; both
 calls also receive the shared abort signal. The draft output budget is 2,000 tokens;
-the audit budget is 3,072 tokens including a 1,024-token thinking target.
+the audit budget is 4,096 tokens including a 1,024-token thinking target.
 Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
 an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
@@ -61,10 +61,10 @@ Use Vercel's deployment history to restore the previously approved deployment af
 ## Independent explanation audit
 
 The generation model remains controlled by ANTHROPIC_MODEL (Sonnet 4.6 by
-default); the audit is pinned in source to Opus 4.6. The draft has a 2,000-token ceiling and audit 3,072 including a 1,024-token
+default); the audit is pinned in source to Opus 4.6. The draft has a 2,000-token ceiling and audit 4,096 including a 1,024-token
 thinking target; neither retries. Auto tool selection allows reasoning before
 one required record_audit report, never an executed tool or a follow-up call. A shared
-55-second budget covers all request work within the 60-second host allowance.
+135-second budget covers all request work within the 150-second host allowance.
 Opus has higher per-token rates; inspect actual latency and usage before release.
 A model migration alone cannot establish better decisions or safe paired timing.
 
@@ -74,8 +74,10 @@ shows the excerpt limit. These bounds contain per-unit report size; truncation
 can still occur and never permits the draft. Monitor 422 refusals separately from
 provider/deadline 502 failures. Never log source, draft, audit details or keys.
 
-The audit must account for every source/draft identifier exactly once with valid
-references. It emits at most six grounded defects, each quote at most 160
+A positive audit must account for every source/draft identifier exactly once with valid
+references. A rejection may stop after one genuine grounded defect and omit the
+coverage tables. Invalid evidence withholds the draft but does not count as a
+correct semantic rejection. It emits at most six grounded defects, each quote at most 160
 characters and reason at most 256. Quotes may come from referenced source or draft
 regardless of defect category. Missing/contradiction defects identify source
 rules; contradiction/unsupported defects identify draft claims. Positive checks
@@ -86,7 +88,7 @@ Context classifications and semantic judgments remain fallible.
 Run the unchanged six-case harness only with authorized provider use:
 `node --experimental-strip-types evals/run-verification.mjs --dry-run` first,
 then `--output-dir NEW_PRIVATE_PATH`. Existing paths are refused. Live calls use
-the existing key in process memory, at most six calls, 50 seconds and 3,072 output
+the existing key in process memory, at most six calls, 80 seconds and 4,096 output
 tokens per call including the thinking target, with no retries. Preserve raw fictional reports and actual usage.
 Compare every judgment against its source; malformed output is not semantic
 rejection. Accurate controls test false refusals, not simplification quality.
@@ -141,3 +143,18 @@ The first thinking-disabled Opus batch completed quickly but approved every bad
 answer. The bounded-reasoning candidate remains unproven until its own unchanged
 audit and paired-request gates pass. Manual thinking is supported but deprecated
 for the pinned Opus 4.6; revalidate compatibility before a model migration.
+
+## Prepared latency repair (unmeasured)
+
+The measured reasoning candidate hit its 50-second provider limit for all three
+bad answers. Accurate controls took 25–38 seconds. The prepared repair shortens
+negative reporting and allows an 80-second audit, a 50-second draft, a 135-second
+shared budget and a 150-second function allowance. It retains two calls and zero
+retries, with up to 4,096 audit output tokens including the 1,024 thinking target.
+This changes maximum latency and possible provider/hosting usage; it is not an
+accuracy or speed claim. Actual six-audit and paired-request measurements still
+require a new explicit usage grant. Production remains unchanged.
+
+The current project has Fluid Compute enabled. Verify that the target plan permits
+the 150-second allowance before release; no billing/plan/settings change is
+authorized. See [Vercel duration limits](https://vercel.com/docs/functions/configuring-functions/duration).

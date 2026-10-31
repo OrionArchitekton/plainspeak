@@ -193,6 +193,12 @@ export default function PlainspeakApp({
             )}
           </button>
 
+          {loading && (
+            <p role="status" className="mt-3 text-xs text-white/40">
+              Checking the document’s conditions and exceptions. This may take a couple of minutes.
+            </p>
+          )}
+
           {error && (
             <p className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
               {error}
