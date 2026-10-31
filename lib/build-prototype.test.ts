@@ -39,6 +39,14 @@ it("retains a failed six-audit batch and spends no calls on full requests", asyn
   expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ collectionComplete: false });
 });
 
+it("enforces the six-call audit-only budget even if every audit passes", async () => {
+  const post = vi.fn(); const emit = vi.fn();
+  const requests = ["refunds", "liability", "warranty"].map(name => ({ name, request: {} }));
+  await expect(collectBuildPrototype({ audit: async () => Array.from({ length: 6 }, () => ({ metProtocolExpectation: true })), post, requests, emit, auditsOnly: true })).rejects.toThrow("publication stopped intentionally");
+  expect(post).not.toHaveBeenCalled();
+  expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ collectionComplete: false, auditBatchComplete: true, providerCallCeiling: 6 });
+});
+
 it("rejects conflicting receipt frames and accepts identical log duplicates", () => {
   const frames = encodeBuildReceipt("audits", { data: "Fixture" }, "fictional-credential");
   expect(decodeBuildReceipts([...frames, ...frames], { allowIncomplete: true })).toEqual({ records: { audits: { data: "Fixture" } }, collectionComplete: false });

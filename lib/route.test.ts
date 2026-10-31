@@ -27,6 +27,7 @@ beforeEach(() => {
       verdict: "pass", issues: [],
       sourceChecks: payload.sourceUnits.map((unit: { id: string }) => ({ sourceId: unit.id, status: "covered", draftIds: [payload.draftUnits[0].id] })),
       draftChecks: payload.draftUnits.map((unit: { id: string; kind: string }) => ({ draftId: unit.id,
+        probe: unit.kind === "question" ? [] : ["The stated rule applies", "Rule applies", "Rule applies"],
         status: unit.kind === "question" ? "question" : "supported", sourceIds: [payload.sourceUnits[0].id] })),
     } }] });
   });

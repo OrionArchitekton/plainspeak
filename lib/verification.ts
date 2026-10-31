@@ -9,8 +9,11 @@ export const VERIFICATION_PROMPT = [
   "Unknown is not false: 'the sequence does not establish that A caused B' or 'the cause is unknown' preserves uncertainty. It does NOT assert 'A did not cause B' or 'the events are unrelated'. A prior event followed by damage proves neither causation nor its absence. Reader-reported facts may be applied conditionally without inventing a causal finding.",
   "An asserted requirement such as 'the provider must confirm this during inspection' or 'coverage is pending inspection' adds a procedural prerequisite unless the source states it. Do not excuse an unsupported must/required/pending condition as sensible caution or customary practice. A genuine question about a possible procedure, or advice to ask for clarification, does not impose that condition.",
   "Check payments actually established, conditional numeric assumptions and their reference periods, exact deadline inclusivity/day units/times, and notice scope. Do not assume full payment or a fixed cap. Keep every exception with its own rule: an exception to a monetary cap does not remove a separate exclusion unless the source says so. A no-refund statement must preserve all applicable overrides within that unit.",
-  "Record issues FIRST, then compact source/draft checks, then the verdict, using record_audit once. Explain defects only: at most six decisive issues, each with a short exact quote (at most160characters) and reason (at most160characters). For missing content quote the omitted source text; for contradiction/unsupported claims quote the defective draft text. Never write reasons or prose for supported units. This tool records data only; no action is executed.",
-  "Account for every source and draft ID exactly once. Supported draft claims need valid source IDs; genuine questions use question status. Covered source rules need valid plain/impact references, never questions. Context means non-operative boilerplate only and may cite reproduced boilerplate or have no references. Pass only with no issues and affirmative checks; reject actual defects. No fenced JSON or prose answer.",
+  "Before choosing any verdict, test each non-question draft unit IN ISOLATION against the source. Choose the strongest source-allowed scenario likely to expose a missing qualification; activate applicable exceptions even if outside this reader's situation. Respect an explicit restriction in that unit, such as 'ordinary mistakes' or 'without fraud', but never import restrictions or corrective exceptions from another draft unit or from the reader's situation. If multiple exceptions apply, challenge the one least clearly preserved in this unit, not merely one it already states.",
+  "For each non-question unit output probe:[scenario,source outcome,isolated unit outcome], each string at most60characters. Use identical outcome strings only for equivalent outcomes in that scenario. If this unit does not state the source's permitted outcome, say 'not stated'; never fill it in from the source or another unit. A mismatch requires issue status and a quoted defect. Questions use probe:[] and question status; question status is never valid for a plain/impact unit, even when it contains advice to ask something. Boilerplate can use a simple identity scenario.",
+  "Example of isolation: source says 'Animals are barred except assistance animals.' Local claim 'You cannot bring an animal' fails the assistance-animal scenario: source allows it, local claim forbids it. Another draft unit mentioning the exception does not repair this claim. A local claim explicitly limited to non-assistance animals can pass; do not test it outside that stated restriction.",
+  "Output draft probes/checks first, source coverage second, then issues and verdict, using record_audit once. Explain defects only: at most six decisive issues, each with a short exact quote (at most160characters) and reason (at most160characters). For missing content quote the omitted source text; for contradiction/unsupported claims quote the defective draft text. Never write prose for supported units. This tool records data only; no action is executed.",
+  "Account for every source and draft ID exactly once. Supported claims need valid source IDs and matching probe outcomes. Covered source rules need valid plain/impact references, never question units. Context means non-operative boilerplate only and may cite reproduced boilerplate or have no references. Pass only with no issues and affirmative checks; reject actual defects. No fenced JSON or prose answer.",
 ].join("\n");
 
 export function verificationInput(request: ExplainRequest, draft: Explanation) {
@@ -32,24 +35,25 @@ export function buildVerificationRequest(model: string, input: VerificationInput
     model, max_tokens: 2000, temperature: 0, system: VERIFICATION_PROMPT,
     messages: [{ role: "user", content: JSON.stringify(input) }],
     tool_choice: { type: "tool", name: "record_audit", disable_parallel_tool_use: true },
-    tools: [{ name: "record_audit", description: "Record decisive quoted defects first, then compact per-unit evidence and a verdict. No prose for successful checks. Equivalent paraphrases and explicit uncertainty are permitted. No action is executed.", input_schema: {
+    tools: [{ name: "record_audit", description: "Compare source and isolated-claim outcomes before choosing a verdict. Record compact probes, coverage and quoted defects. Equivalent paraphrases and explicit uncertainty are permitted. No action is executed.", input_schema: {
       type: "object", additionalProperties: false,
       properties: {
-        issues: { type: "array", maxItems: 6, items: { type: "object", additionalProperties: false,
-          required: ["kind", "sourceIds", "draftIds", "quote", "reason"], properties: {
-            kind: { type: "string", enum: ["missing", "contradiction", "unsupported"] }, sourceIds: ids, draftIds: ids,
-            quote: { type: "string", minLength: 1, maxLength: 160, description: "Exact fragment of cited source for missing content; exact fragment of cited draft for a contradiction or unsupported assertion." },
-            reason: { type: "string", minLength: 1, maxLength: 160, description: "Concrete outcome difference or unsupported assertion. Equivalent wording or uncertainty alone is not a defect." },
-          } } },
-        draftChecks: { type: "array", items: { type: "object", additionalProperties: false, required: ["draftId", "status", "sourceIds"], properties: {
-          draftId: { type: "string" }, status: { type: "string", enum: ["supported", "question", "issue"] },
+        draftChecks: { type: "array", items: { type: "object", additionalProperties: false, required: ["draftId", "probe", "status", "sourceIds"], properties: {
+          draftId: { type: "string" },
+          probe: { type: "array", minItems: 0, maxItems: 3, items: { type: "string", minLength: 1, maxLength: 60 }, description: "Questions: []. Otherwise [scenario, source outcome, isolated unit outcome]; identical outcomes only when equivalent. Test applicable exceptions absent from this local unit." },
+          status: { type: "string", enum: ["supported", "question", "issue"] },
           sourceIds: ids,
         } } },
         sourceChecks: { type: "array", items: { type: "object", additionalProperties: false, required: ["sourceId", "status", "draftIds"], properties: {
           sourceId: { type: "string" }, status: { type: "string", enum: ["covered", "context", "issue"] }, draftIds: ids,
         } } },
+        issues: { type: "array", maxItems: 6, items: { type: "object", additionalProperties: false,
+          required: ["kind", "sourceIds", "draftIds", "quote", "reason"], properties: {
+            kind: { type: "string", enum: ["missing", "contradiction", "unsupported"] }, sourceIds: ids, draftIds: ids,
+            quote: { type: "string", minLength: 1, maxLength: 160 }, reason: { type: "string", minLength: 1, maxLength: 160 },
+          } } },
         verdict: { type: "string", enum: ["pass", "reject"] },
-      }, required: ["issues", "draftChecks", "sourceChecks", "verdict"],
+      }, required: ["draftChecks", "sourceChecks", "issues", "verdict"],
     } }],
   };
 }
@@ -85,14 +89,16 @@ export function inspectAudit(raw: string, input: VerificationInput): { complete:
       new Set(actual).size === actual.length && actual.every(id => typeof id === "string" && expected.includes(id));
     if (!sameIds(audit.sourceChecks.map((row: { sourceId?: unknown } | null) => row?.sourceId), input.sourceUnits.map(unit => unit.id)) ||
         !sameIds(audit.draftChecks.map((row: { draftId?: unknown } | null) => row?.draftId), input.draftUnits.map(unit => unit.id))) return invalid;
-    if (!audit.draftChecks.every((row: { draftId?: unknown; status?: unknown; sourceIds?: unknown }) => {
+    if (!audit.draftChecks.every((row: { draftId?: unknown; status?: unknown; sourceIds?: unknown; probe?: unknown }) => {
       if (!Array.isArray(row.sourceIds) ||
           new Set(row.sourceIds).size !== row.sourceIds.length ||
           !row.sourceIds.every(id => input.sourceUnits.some(unit => unit.id === id))) return false;
+      if (!Array.isArray(row.probe) || ![0, 3].includes(row.probe.length) ||
+          !row.probe.every(part => typeof part === "string" && part.trim() && part.length <= 60)) return false;
       const unit = input.draftUnits.find(unit => unit.id === row.draftId)!;
       if (row.status === "issue") return true;
-      if (unit.kind === "question") return row.status === "question";
-      return row.status === "supported" && row.sourceIds.length > 0;
+      if (unit.kind === "question") return row.status === "question" && row.probe.length === 0;
+      return row.status === "supported" && row.sourceIds.length > 0 && row.probe.length === 3 && row.probe[1] === row.probe[2];
     })) return invalid;
     const complete = audit.sourceChecks.every((row: { status?: unknown; draftIds?: unknown }) => {
       if (!Array.isArray(row.draftIds) || new Set(row.draftIds).size !== row.draftIds.length ||
