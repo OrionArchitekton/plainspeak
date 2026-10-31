@@ -61,13 +61,23 @@ not prove simplification quality. Three full local two-call requests and the fin
 unchanged public-app requests remain separate acceptance surfaces.
 
 The app and evaluator share the single named audit response format and validation.
-Inspect each draft unit's source evidence and specific comparison reason, as well
-as source coverage. A list of reviewed IDs or a bare positive judgment cannot pass.
+Inspect each draft unit's source evidence and source coverage. Successful checks
+are compact; reasons and exact quotes are emitted for defects only, with at most
+six defects and 160 characters each for quote and reason. A list of reviewed IDs
+or a bare positive judgment cannot pass. Quote presence is a structural check,
+not proof that the claimed defect exists. Context may reference reproduced
+boilerplate; it cannot substitute for operative rule coverage.
 Retain the provider's returned model identity, raw content blocks and usage in the
 private evaluation receipts. The first cloud run's six fenced outputs all failed
 the wire protocol, and their internal judgments incorrectly passed all three bad
 answers. A parser-only change would not repair that semantic failure. The revised
 format must be measured against the same unchanged cases before any release.
+Revision a977aa9 also failed: two reports truncated at 2,000 tokens, the bad
+warranty answer passed, and accurate controls were refused. The compact report
+and clarified decision scopes must address both report size and actual semantic
+decisions. Distinguish uncertainty from a negative causal finding, equivalent
+exceptions from contradictory outcomes, and source-established procedures from
+plausible extra prerequisites. Do not change the fixtures to obtain a pass.
 
 When separately approved, `run-build-prototype.mjs --vercel-build-only` runs the
 same bounded evaluation with Vercel's existing production configuration, followed

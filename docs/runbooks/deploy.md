@@ -74,13 +74,20 @@ privacy/advice notice still applies. Do not log bodies, drafts, audit reasons or
 keys, and do not add automatic retries for refusals.
 
 The audit now records one completed `record_audit` tool response containing source
-coverage and a separate evidence-backed check with a concise reason for every
-draft unit. This is a response format only: the application executes no tool and
+coverage and a compact evidence-backed check for every draft unit. Reasons are
+reserved for at most six decisive defects, with an exact quoted fragment and
+reason each limited to 160 characters. The server checks quotes against their
+referenced source/draft units; it does not infer whether a complaint is true.
+Non-operative context may cite reproduced boilerplate or have no references.
+This is a response format only: the application executes no tool and
 makes no follow-up model call. Free-text or fenced JSON, missing/extra/wrong tool
 calls, incomplete output and invalid evidence fail closed. The evaluator uses
 the same request builder, response reader and report validator as the app. A
 complete valid report still requires semantic review; structure cannot establish
-whether its reasons are true. The initial cloud prototype wrongly approved all
+whether its reasons are true. Coverage is collective; each impact needs only its
+own applicable conditions, and equivalent paraphrases are valid. Preserving
+uncertainty is different from asserting a negative causal fact. An inspection or
+approval prerequisite requires source support. The initial cloud prototype wrongly approved all
 three preserved bad answers inside fenced text. Do not deploy by merely removing
 those fences or treating those protocol refusals as accurate rejection.
 

@@ -7,22 +7,46 @@ const input = verificationInput({ document: "Early cancellation refunds payments
   questions: ["How do I request it?"],
 });
 function validAudit() {
-  return { verdict: "pass", issues: [] as string[], sourceChecks: input.sourceUnits.map(unit => ({ sourceId: unit.id, status: "covered", draftIds: ["p0"] })),
-    draftChecks: input.draftUnits.map(unit => ({ draftId: unit.id, status: unit.kind === "question" ? "question" : "supported", sourceIds: unit.kind === "question" ? [] : ["s0", "s1"], reason: "Early refund deducts fee; Studio cancellation returns all payments." })) };
+  return { verdict: "pass", issues: [] as { kind: string; sourceIds: string[]; draftIds: string[]; quote: string; reason: string }[], sourceChecks: input.sourceUnits.map(unit => ({ sourceId: unit.id, status: "covered", draftIds: ["p0"] })),
+    draftChecks: input.draftUnits.map(unit => ({ draftId: unit.id, status: unit.kind === "question" ? "question" : "supported", sourceIds: unit.kind === "question" ? [] : ["s0", "s1"] })) };
 }
 
 describe("independent audit publication boundary", () => {
+  it("recognizes a complete rejection with an exact quoted defect and refuses invented witnesses", () => {
+    const target = verificationInput({ document: "Refunds require written notice.", readingLevel: "plain" }, {
+      plain: "A phone call guarantees a refund.", affectsYou: [{ point: "Your phone call guarantees a refund.", severity: "high" }], questions: ["Who accepts notice?"],
+    });
+    const report = { verdict: "reject", sourceChecks: [{ sourceId: "s0", status: "issue", draftIds: ["p0", "a0"] }],
+      draftChecks: target.draftUnits.map(unit => ({ draftId: unit.id, status: unit.kind === "question" ? "question" : "issue", sourceIds: unit.kind === "question" ? [] : ["s0"] })),
+      issues: [{ kind: "unsupported", sourceIds: ["s0"], draftIds: ["p0", "a0"], quote: "phone call guarantees a refund", reason: "Source requires written notice; a phone call is not specified." }] };
+    expect(inspectAudit(JSON.stringify(report), target)).toEqual({ complete: true, allowed: false });
+    report.issues[0].quote = "A guarantee absent from the actual draft";
+    expect(inspectAudit(JSON.stringify(report), target)).toEqual({ complete: false, allowed: false });
+  });
   it("accepts a complete report and distinguishes a complete rejection from malformed output", () => {
     const audit = validAudit();
     expect(inspectAudit(JSON.stringify(audit), input)).toEqual({ complete: true, allowed: true });
-    audit.verdict = "reject"; audit.issues.push("The impact invents an unconditional refund.");
+    // Protocol-only: whether a quoted complaint is semantically true is measured separately.
+    audit.verdict = "reject"; audit.issues.push({ kind: "unsupported", sourceIds: ["s1"], draftIds: ["a0"], quote: "Studio cancellation refunds all payments.", reason: "A test-only claimed defect." });
     audit.draftChecks[1].status = "issue";
     expect(inspectAudit(JSON.stringify(audit), input)).toEqual({ complete: true, allowed: false });
     expect(inspectAudit("```json\n" + JSON.stringify(audit) + "\n```", input)).toEqual({ complete: false, allowed: false });
   });
-  it.each(["missing reason", "empty evidence", "unknown source", "duplicate draft", "unreviewed question", "question instead of claim", "reported issue"])("withholds a draft with invalid claim evidence: %s", flaw => {
+  it.each(["wrong draft", "wrong source", "unknown id", "duplicate id", "long reason", "empty quote", "too many issues"])("refuses malformed defect evidence: %s", flaw => {
+    const report = validAudit(); report.verdict = "reject";
+    const issue = { kind: "unsupported", sourceIds: ["s0"], draftIds: ["p0"], quote: "Early cancellation refunds paid amounts", reason: "Test-only claimed defect." };
+    if (flaw === "wrong draft") issue.draftIds = ["a0"];
+    if (flaw === "wrong source") { issue.kind = "missing"; issue.quote = "Studio cancellation refunds all payments."; }
+    if (flaw === "unknown id") issue.sourceIds = ["s100"];
+    if (flaw === "duplicate id") issue.draftIds = ["p0", "p0"];
+    if (flaw === "long reason") issue.reason = "x".repeat(161);
+    if (flaw === "empty quote") issue.quote = " ";
+    report.issues = flaw === "too many issues" ? Array.from({ length: 7 }, () => issue) : [issue];
+    expect(inspectAudit(JSON.stringify(report), input)).toEqual({ complete: false, allowed: false });
+  });
+  it.each(["unknown status", "empty evidence", "unknown source", "duplicate draft", "unreviewed question", "question instead of claim", "reported issue"])("withholds a draft with invalid claim evidence: %s", flaw => {
     const audit = validAudit();
-    if (flaw === "missing reason") audit.draftChecks[0].reason = " ";
+    if (flaw === "unknown status") audit.draftChecks[0].status = "checked";
     if (flaw === "empty evidence") audit.draftChecks[0].sourceIds = [];
     if (flaw === "unknown source") audit.draftChecks[0].sourceIds = ["s100"];
     if (flaw === "duplicate draft") audit.draftChecks[1] = audit.draftChecks[0];

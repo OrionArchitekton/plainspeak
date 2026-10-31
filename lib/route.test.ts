@@ -27,13 +27,27 @@ beforeEach(() => {
       verdict: "pass", issues: [],
       sourceChecks: payload.sourceUnits.map((unit: { id: string }) => ({ sourceId: unit.id, status: "covered", draftIds: [payload.draftUnits[0].id] })),
       draftChecks: payload.draftUnits.map((unit: { id: string; kind: string }) => ({ draftId: unit.id,
-        status: unit.kind === "question" ? "question" : "supported", sourceIds: [payload.sourceUnits[0].id], reason: "The source establishes this rule." })),
+        status: unit.kind === "question" ? "question" : "supported", sourceIds: [payload.sourceUnits[0].id] })),
     } }] });
   });
 });
 afterEach(() => vi.unstubAllEnvs());
 
 describe("explanation privacy boundary", () => {
+  it("accepts compact affirmative evidence and references to non-operative context without positive prose", async () => {
+    const normalAudit = audit.getMockImplementation()!;
+    audit.mockImplementation(async input => {
+      const result = await normalAudit(input);
+      const report = result.content[0].input;
+      for (const row of report.draftChecks) delete row.reason;
+      report.sourceChecks[0].status = "context";
+      return result;
+    });
+    create.mockResolvedValue({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({
+      plain: "Fictional notice. A rule applies.", affects_you: [{ point: "A rule applies.", severity: "high" }], questions: ["One?", "Two?", "Three?"],
+    }) }] });
+    expect((await POST(request({ document: "Fictional notice. A rule applies." }))).status).toBe(200);
+  });
   it("refuses a free-text audit even when it contains a complete positive report", async () => {
     const normalAudit = audit.getMockImplementation()!;
     audit.mockImplementation(async input => {
