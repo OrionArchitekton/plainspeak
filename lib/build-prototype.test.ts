@@ -47,6 +47,25 @@ it("enforces the six-call audit-only budget even if every audit passes", async (
   expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ collectionComplete: false, auditBatchComplete: true, providerCallCeiling: 6 });
 });
 
+it("collects only three paired requests under an explicit six-call phase and never repeats audits", async () => {
+  const audit = vi.fn(() => { throw new Error("Do not repeat audits"); });
+  const post = vi.fn(async () => new Response('{}', { status: 422, headers: { 'Cache-Control': 'no-store' } }));
+  const emit = vi.fn();
+  const requests = ["refunds", "liability", "warranty"].map(name => ({ name, request: {} }));
+  await expect(collectBuildPrototype({ audit, post, requests, emit, requestsOnly: true })).rejects.toThrow("publication stopped intentionally");
+  expect(audit).not.toHaveBeenCalled();
+  expect(post).toHaveBeenCalledTimes(3);
+  expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ collectionComplete: false, auditBatchComplete: false, requestBatchComplete: true, requestedPhase: "requests-only", providerCallCeiling: 6 });
+});
+
+it("rejects mutually exclusive prototype phases before any provider work", async () => {
+  const audit = vi.fn(); const post = vi.fn(); const emit = vi.fn();
+  const requests = ["refunds", "liability", "warranty"].map(name => ({ name, request: {} }));
+  await expect(collectBuildPrototype({ audit, post, requests, emit, auditsOnly: true, requestsOnly: true })).rejects.toThrow("publication stopped intentionally");
+  expect(audit).not.toHaveBeenCalled(); expect(post).not.toHaveBeenCalled();
+  expect(emit.mock.calls.at(-1)?.[1]).toMatchObject({ requestBatchComplete: false, auditBatchComplete: false, collectionComplete: false });
+});
+
 it("rejects conflicting receipt frames and accepts identical log duplicates", () => {
   const frames = encodeBuildReceipt("audits", { data: "Fixture" }, "fictional-credential");
   expect(decodeBuildReceipts([...frames, ...frames], { allowIncomplete: true })).toEqual({ records: { audits: { data: "Fixture" } }, collectionComplete: false });

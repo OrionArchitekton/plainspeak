@@ -1,31 +1,84 @@
 # Explanation verification
 
-Dan approved a separate verification step on 2026-10-30 after three deployed prompt-only repairs failed the unchanged workshop case. This implements that choice; no general factual-accuracy guarantee is made.
+A separate audit checks each draft before a reader can receive it. Repeated
+Sonnet audits, including bounded thinking, failed the preserved financial cases.
+The current repair evaluates a pinned Opus 4.6 auditor. This is a measured
+hypothesis; neither the model choice nor structural checks guarantee accuracy.
 
 ## Scenarios and acceptance
 
-1. A reader submits a valid document. Plainspeak generates one draft, then sends the original source and the entire normalized draft to a separate model call. The audit checks source-rule coverage, exceptions attached to each restatement, deadlines/request methods, actual-paid formulas, causation and unsupported procedural requirements. It checks personalized impacts as well as the plain explanation; questions cannot substitute for missing coverage.
-2. An approved audit accounts for every source unit and draft unit exactly once using server-assigned identifiers. Each source unit is either covered with valid draft references or explicitly non-operative context. Context may have valid references to reproduced boilerplate or no references; it never establishes operative coverage. Every draft unit has its own compact supported/question/issue judgment and source references. Explanations are reserved for defects, with a short reason and an exact quote from a referenced source or draft unit. Unknown/duplicate/missing identifiers, malformed judgments, empty evidence for covered rules or supported draft claims, invented defect quotes, any reported issue or a rejection prevent publication. One named structured audit response is required; free-text JSON, missing/extra tool calls and incomplete responses never permit a draft. Identifier, format and quote checks establish audit structure, not semantic truth.
-3. A rejected, incomplete, truncated or unavailable audit yields a clear non-cacheable error with no draft or provider/audit details. The app shows its existing error state. It never falls back to the draft, retries automatically, or displays an answer before audit completion. A valid audit preserves the existing successful response shape. Invalid requests and rate-limit denials still avoid both model calls.
-4. A request uses at most two model calls, without SDK retries. Draft and audit each retain a bounded output budget. One shared invocation budget under the existing 60-second function allowance covers body reading, optional limiter, draft and audit; expiry or reader disconnection aborts provider work and returns a generic no-store error. The implementation must not start an audit after expiry or disconnection. No credentials, environment settings or deployment protection change.
-5. Evaluation uses the unchanged workshop/subscription/warranty requests and their preserved bad answers. Before public production release, actual prototype measurements must show whether the independent audit rejects those failures, accepts accurate controls and fits latency/usage limits. Evaluation may use a local runtime or a separately approved cloud test build that stops before publishing. The cloud test uses the built request handler and existing configuration; it does not replace deployed HTTP/browser proof. Stubbed unit audits cannot establish model correctness. Production completion requires the same real requests and desktop/mobile consumer readback; report whether each returned an accurate verified explanation or explicitly refused it.
+1. A reader submits a nonempty document within the character/body limits and at
+   most 24 sentence or nonempty-line units. Larger sources return a clear 400
+   before a quota slot or provider call. The input page describes the excerpt
+   limit. One draft uses the existing configured generation model. A normalized
+   draft over 32 paragraph/impact/question units is withheld with 422 before the
+   audit, bounding reporting work. A size bound does not guarantee output fits.
+2. The original source, situation and entire normalized draft go to a separate
+   Opus 4.6 call. Thinking is disabled, its output ceiling is 2,000 tokens and it
+   must return one completed named audit report. The audit checks collective
+   coverage and each restatement's own conditions and exceptions. Coverage in
+   another paragraph or a question cannot repair a locally unconditional rule.
+   Independent triggers may coexist; a due amount never proves actual payment.
+   Equivalent outcomes and explicit uncertainty are valid. An unsupported
+   mandatory procedure is a defect; a genuine question does not impose one.
+3. Every source and draft identifier must be accounted for exactly once. Covered
+   source rules need plain/impact references, never questions. Supported draft
+   claims need source references; questions keep their declared kind.
+   Non-operative context may cite boilerplate or have no references. At most six
+   defects have exact quoted evidence (160 characters) and reasons (256).
+   Evidence may quote a referenced source or draft regardless of issue category.
+   Omissions/contradictions identify source rules; contradictions/unsupported
+   claims identify draft units. Unknown or duplicate identifiers, invented
+   quotes, invalid judgments, any issue or a rejection withhold the draft.
+   Identifier, quote and format checks establish structure, not factual truth.
+4. Negative, incomplete, truncated, unavailable or malformed audits yield a
+   generic no-store error with no draft, audit or provider details. No fallback,
+   automatic retry or early draft display occurs. A valid positive audit retains
+   the existing successful response shape. The application executes no tool.
+5. The draft and audit each allow 2,000 output tokens, at most two model calls and
+   zero SDK retries. The shared 55-second deadline covers reading, optional
+   limiter and both calls within the 60-second function allowance. Expiry or
+   reader disconnection aborts work; no audit starts after cancellation. The
+   existing key/provider/SDK are used without environment or protection changes.
+   Opus has higher per-token rates; measure actual usage and latency before
+   release. The generation-model setting controls the draft only; the audit
+   model is pinned in source.
+6. Evaluation preserves all original requests, reading levels, situations, bad
+   answers and labels. Six real audits must reject every known bad answer with
+   genuine evidence and accept all three accurate controls. In particular, the
+   subscription rejection must identify its lost-profits statement's omitted
+   direct-fraud exception and altered inclusive cutoff. Workshop review must
+   detect local override omissions and unsupported full-payment assumptions.
+   All original semantic criteria in evals/README.md remain unchanged.
+7. After all six audits pass protocol and manual semantic review, measure the
+   original three full compiled requests at the exact same source head. Each
+   must return an accurate 200 explanation or clear 422 refusal without a draft;
+   deadline/provider failures and missing evidence fail acceptance. Actual
+   complete paired latency must fit the shared deadline. Production release
+   requires source review/CI and these real gates, then the same public requests
+   with settled desktop/mobile response and rendering proof. Report every
+   accurate explanation or refusal individually; source CI is not consumer proof.
 
-## Test seams and tradeoffs
+## Test seams and cloud phases
 
-The primary automated seam is the existing POST handler with a stubbed provider: it verifies that no draft crosses the API boundary before a complete positive audit, including failure and deadline paths. Small pure tests cover audit parsing and identifier checks. Actual model semantic checks are a separate measured prototype/deployed seam and must retain unsuccessful results. Models can approve flawed drafts or reject accurate ones; this reduces exposure but cannot prove completeness or professional suitability.
+The primary automated seam is the POST handler with a fake provider, including
+admission bounds, audit request selection, refusals, cancellation and deadlines.
+Small pure tests cover report grounding/identifier structure. Real semantic and
+latency measurements remain a separate consumer seam; fake audits cannot prove
+model quality. All unsuccessful receipts remain preserved.
 
-Coverage is judged across the explanation and impacts collectively. Individual impacts need not repeat unrelated rules or use the source's wording, but each restated rule must retain its own applicable qualifications. Equivalent outcomes are acceptable. Saying causation is not established preserves uncertainty; saying events are unrelated asserts a negative causal fact. A mandatory inspection/approval prerequisite requires source support; a genuine question asking about a possible procedure does not establish one. The audit must apply these distinctions rather than demand redundant restatement or add customary procedures.
+An explicitly authorized cloud test build can use existing production credentials
+without exporting them and must always stop publication. The six-call audits-only
+phase never invokes the app. After manual admission, the six-call requests-only
+phase invokes just the three original compiled requests and never repeats audits.
+Conflicting modes are rejected. Each phase records its own completion; neither
+alone establishes the full collection. Both must bind the identical reviewed
+source head and the cumulative newly authorized 12-call ceiling. No phase runs
+from ordinary CI, a timer or default deployment. Missing, malformed or partial
+receipts do not admit release. The expected test-build state is ERROR with no
+aliases; it is never promoted.
 
-The first cloud prototype at 60ff056 failed acceptance: all six audits used fenced text, and the judgments inside the fences incorrectly passed all three preserved bad answers. All three compiled requests refused their draft. The revised audit protocol is a hypothesis to measure on those unchanged cases, not evidence that the model now detects the defects. That revision kept model selection, the two-call ceiling, 2,000-token output budgets and the shared deadline unchanged. A cloud evaluation stops before the three full requests if its six audit protocol expectations fail; it retains that unsuccessful batch without repeating it.
-
-The a977aa9 prototype also failed: two verbose reports truncated, a bad warranty answer passed and accurate controls were refused. Compact affirmative checks and quoted defect-only explanations address report size; clarified coverage and assertion scopes address the observed decision errors. Each defect quote is limited to 160 characters and reason to 256 characters, with at most six decisive defects. These changes remain hypotheses until the unchanged live evaluation passes; no fixture-specific exception or automatic approval override is permitted.
-
-The compact 6e8325e run removed truncation and passed four of six checks, but financial claims still failed. A separately selected audit-only run may consume the remaining six calls after a reviewed repair. Its runner never starts full application requests, even when all audits pass. That phase proves only audit outcomes; full two-call request measurements and all production consumer checks remain outstanding and cannot be inferred from it.
-
-This adds one provider call per successful draft, more latency and recurring usage, explicitly approved by Dan. No new service or dependency is required. Existing privacy/advice notices remain accurate. Source and draft remain server/provider data, with no application persistence or new body logs. Rollback is a normal source revert or restoration of the previous approved deployment.
-
-The isolated-claim comparison experiment at 1a5d32a failed the measured gate. Literal equality of free-text outcome labels created false refusals, and the model still missed the subscription exception. That comparison protocol was removed from the candidate; the compact audit remains a partial repair with only four of six measured checks passing. No release is admitted. All unsuccessful receipts remain preserved.
-
-The first financial-exception reasoning candidate kept the same model and two-call ceiling. The audit may reason before recording its compact verdict, using the existing SDK supported manual thinking configuration (currently deprecated for Sonnet 4.6). That candidate used a 4,096-token audit ceiling including a 2,048-token thinking target; the draft stays at 2,000 tokens and the shared deadline stays at 55 seconds. Auto tool selection permits reasoning; one completed named audit tool is still mandatory and no tool is executed. Thinking blocks never become an explanation or substitute for the audit. Actual unchanged-case decisions and complete paired timings must pass before release; a larger budget alone proves nothing. No fixture-specific rules or acceptance changes are permitted.
-
-The first reasoning batch passed accurate controls but did not pass the release gate: two genuine rejections had malformed evidence and a third case timed out. Defect evidence may quote either its referenced source or draft regardless of issue category; this removes a reporting convention without weakening the positive-publication gate. Reasons are bounded at 256 characters, quotes remain at 160 and at most six issues are allowed. A smaller 1,024-token thinking target within a 3,072-token audit ceiling addresses measured latency; the 55-second shared deadline is unchanged. The comparison must test co-occurring triggers unless the source explicitly makes them exclusive, and a payment becoming due never proves it was paid. The remaining six-call audit-only batch cannot establish full paired feasibility or admit release.
+The audit adds recurring usage and latency as explicitly approved. No new service,
+SDK dependency, document persistence or application body logging is added.
+Privacy/advice notices still apply. Rollback is a reviewed source revert or
+restoration of the previous approved deployment, preserving settings and receipts.

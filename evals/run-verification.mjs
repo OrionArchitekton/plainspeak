@@ -33,7 +33,7 @@ if (dryRun) {
     const started = performance.now();
     let result;
     try {
-      const message = await client.messages.create(buildVerificationRequest(process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6', input), { signal: AbortSignal.timeout(50000) });
+      const message = await client.messages.create(buildVerificationRequest(input), { signal: AbortSignal.timeout(50000) });
       const text = verificationReport(message);
       const { allowed, complete } = text === null ? { allowed: false, complete: false } : inspectAudit(text, input);
       let judgment;

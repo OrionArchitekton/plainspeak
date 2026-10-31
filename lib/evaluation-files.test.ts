@@ -28,7 +28,7 @@ it("refuses an existing evaluation directory before any provider calls", async (
   const output = await prepare();
   await mkdir(output, { mode: 0o700 });
   await writeFile(join(output, "keep.txt"), "Prior evidence");
-  await expect(import("../evals/run-verification.mjs")).rejects.toThrow();
+  await expect(import("../evals/run-verification.mjs")).rejects.toMatchObject({ code: "EEXIST" });
   expect(create).not.toHaveBeenCalled();
   expect(await readFile(join(output, "keep.txt"), "utf8")).toBe("Prior evidence");
 });
@@ -37,7 +37,7 @@ it("writes private case receipts and one final aggregate with a fake provider", 
   const output = await prepare();
   await import("../evals/run-verification.mjs");
   expect(create).toHaveBeenCalledTimes(6);
-  expect(create.mock.calls.every(call => call[0].thinking?.type === "enabled" && call[0].thinking.budget_tokens === 1024 && call[0].tool_choice?.type === "auto" && call[0].tool_choice.disable_parallel_tool_use === true && call[0].tools[0].name === "record_audit")).toBe(true);
+  expect(create.mock.calls.every(call => call[0].model === "claude-opus-4-6" && call[0].thinking?.type === "disabled" && call[0].tool_choice?.type === "tool" && call[0].tool_choice.disable_parallel_tool_use === true && call[0].tools[0].name === "record_audit")).toBe(true);
   expect((await stat(output)).mode & 0o077).toBe(0);
   const files = await readdir(output);
   expect(files).toHaveLength(7);

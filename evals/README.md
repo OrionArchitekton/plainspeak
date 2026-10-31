@@ -49,65 +49,42 @@ Repeat `fixtures/warranty-exclusions.json` unchanged at the plain reading level 
 
 ## Independent audit prototype
 
-`verification-cases.json` contains three actual unsuccessful responses from
-production merge 5ea5739 and three source-preserving positive controls. They are
-fictional, offline evidence, not live answers. The bounded harness is
-`node --experimental-strip-types evals/run-verification.mjs --dry-run`; with
-explicit provider/key-use authority, pass `--output-dir` pointing to a new private
-directory. It makes six audit calls without retries and records latency, tokens,
-raw audits and protocol outcomes. Inspect meaning manually. Rejection caused by
-invalid/truncated output is not semantic success; accepting accurate controls does
-not prove simplification quality. Three full local two-call requests and the final
-unchanged public-app requests remain separate acceptance surfaces.
+verification-cases.json preserves the three bad production answers and three
+accurate controls, with their original source requests. Do not edit fixtures or
+labels to obtain a pass. Malformed, truncated or unavailable output is not a
+semantic rejection. Every defect must be genuine; positive controls reproduce
+the source and preserve impact qualifications, rather than proving simplification
+quality. All original acceptance criteria above remain in force.
 
-The app and evaluator share the single named audit response format and validation.
-Inspect each draft unit's source evidence and source coverage. Successful checks
-are compact; reasons and exact quotes are emitted for defects only, with at most
-six defects, 160 characters per quote and 256 characters per reason. A list of reviewed IDs
-or a bare positive judgment cannot pass. Quote presence is a structural check,
-not proof that the claimed defect exists. Context may reference reproduced
-boilerplate; it cannot substitute for operative rule coverage.
-Retain the provider's returned model identity, raw content blocks and usage in the
-private evaluation receipts. The first cloud run's six fenced outputs all failed
-the wire protocol, and their internal judgments incorrectly passed all three bad
-answers. A parser-only change would not repair that semantic failure. The revised
-format must be measured against the same unchanged cases before any release.
-Revision a977aa9 also failed: two reports truncated at 2,000 tokens, the bad
-warranty answer passed, and accurate controls were refused. The compact report
-and clarified decision scopes must address both report size and actual semantic
-decisions. Distinguish uncertainty from a negative causal finding, equivalent
-exceptions from contradictory outcomes, and source-established procedures from
-plausible extra prerequisites. Do not change the fixtures to obtain a pass.
+The evaluator and app share the pinned Opus 4.6 audit builder and response reader,
+with thinking disabled, one forced report and a 2,000-token output cap. The draft
+retains its configured model and its own 2,000-token cap. No new key/environment
+setting is needed. A model change is a hypothesis, not evidence of accuracy.
 
-When separately approved, `run-build-prototype.mjs --vercel-build-only` runs the
-same bounded evaluation with Vercel's existing production configuration, followed
-by three compiled POST-handler requests. It always stops build publication. This
-is an alternative to local key access, not an automatic CI step. Its synthetic
-receipt frames can be reconstructed with the exported `decodeBuildReceipts`;
-missing/conflicting frames fail validation. See the operator runbook for the
-exact target, approval, call ceiling and public-alias checks. Full deployed HTTP
-and desktop/mobile proof remain mandatory.
+Run `node --experimental-strip-types evals/run-verification.mjs --dry-run` without
+provider calls. Explicit live use needs approved existing-key/provider authority
+and `--output-dir NEW_PRIVATE_PATH`; an existing leaf is rejected before calls.
+The harness makes exactly six attempts, no retries, at most 50 seconds each, and
+retains input hashes, returned model identity, raw reports, usage and latency.
+Unknown usage is not zero. Checks of references/quotes/format do not establish
+whether a semantic judgment is true.
 
-The cloud runner stops before the three full requests if any of the six audit
-protocol expectations fails. All audit receipts remain available; the decoder
-then intentionally reports the full collection as incomplete. This early stop
-saves calls but does not establish semantic success, even when every protocol
-expectation passes. Review the actual reasons before release.
+The audit compares collective source coverage and each unit's local conditions.
+Other paragraphs and questions cannot cure an unconditional claim. It must not
+assume independent causes are exclusive, confuse due with paid, invent a mandatory
+inspection, or turn unknown causation into a negative causal claim. Reasons and
+quoted defects stay bounded; full affirmative per-unit evidence is still required.
 
-An explicit `--audits-only` build-only invocation caps a partial-budget run at six
-audit calls, with no app calls even on success. Its `auditBatchComplete` field is
-separate from the intentionally incomplete full collection. It cannot replace
-the required full two-call app measurements or consumer readback.
+For cloud measurements, use the nonpublishing build runner in the operator
+runbook. First select audits-only for six calls. After every actual audit passes
+protocol and manual semantic review, requests-only invokes the three unchanged
+compiled requests at that identical source head for at most six further calls.
+Bind both native jobs and receipts; cumulative prototype use remains at most 12.
+Each phase alone is incomplete full evidence. No repeated audits or automatic
+publication is implied. Failed and partial results must remain preserved.
 
-The 1a5d32a isolated-claim experiment failed and was removed. Free-text outcome
-labels could not safely be compared as literal strings; the model also still
-missed the bad subscription exception. Keep those failed receipts and the
-known four-of-six compact-audit result. The candidate is not release-ready.
-
-The financial-exception candidate uses the same configured model with bounded
-manual thinking before its compact audit: a 1,024-token thinking target inside a
-3,072-token total audit output ceiling. Draft output remains capped at 2,000.
-Thinking and auto tool selection do not change any fixture or expected outcome.
-A completed named audit remains mandatory. Inspect actual quoted defects and
-accurate controls, and require the full two-call request measurements within
-the shared deadline before admitting deployment. No retry or resampling is implied.
+After all audit, paired timing/behavior and source checks pass, the existing
+conditional release authority can admit an ordinary production deployment. Then
+repeat the original three public-app requests once each and inspect the actual
+responses and settled desktop/mobile UI. A 200 must be accurate; a refusal must
+be clear and contain no draft. No deadline/provider failure passes the gate.

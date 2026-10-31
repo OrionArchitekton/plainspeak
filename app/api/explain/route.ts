@@ -9,7 +9,7 @@ import {
   type ExplainRequest,
   type ReadingLevel,
 } from "@/lib/explain";
-import { auditAllowsDraft, buildVerificationRequest, verificationInput, verificationReport } from "@/lib/verification";
+import { MAX_SOURCE_UNITS, MAX_DRAFT_UNITS, sourceUnitCount, auditAllowsDraft, buildVerificationRequest, verificationInput, verificationReport } from "@/lib/verification";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -146,6 +146,10 @@ async function explain(req: NextRequest, signal: AbortSignal) {
     );
   }
 
+  if (sourceUnitCount(document) > MAX_SOURCE_UNITS) {
+    return respond({ error: `Use a shorter excerpt with at most ${MAX_SOURCE_UNITS} sentences or nonempty lines.` }, { status: 400 });
+  }
+
   const readingLevel: ReadingLevel = VALID_LEVELS.includes(
     body.readingLevel as ReadingLevel,
   )
@@ -213,8 +217,11 @@ async function explain(req: NextRequest, signal: AbortSignal) {
       throw new Error("Incomplete explanation");
     }
     const input = verificationInput(request, explanation);
+    if (input.draftUnits.length > MAX_DRAFT_UNITS) {
+      return respond({ error: "Could not verify this explanation. Please try a shorter excerpt." }, { status: 422 });
+    }
     signal.throwIfAborted();
-    const audit = await client.messages.create(buildVerificationRequest(MODEL, input), { signal });
+    const audit = await client.messages.create(buildVerificationRequest(input), { signal });
     if (audit.stop_reason !== "tool_use" && audit.stop_reason !== "end_turn") throw new Error("Incomplete verification");
     const auditText = verificationReport(audit);
     if (auditText === null || !auditAllowsDraft(auditText, input)) {

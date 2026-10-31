@@ -38,7 +38,7 @@ The explanation function allows 60 seconds. A shared 55-second request deadline
 covers body reads, rate-limit lookup and both the draft and audit calls. The
 provider client uses a 50-second per-call timeout and no automatic retries; both
 calls also receive the shared abort signal. The draft output budget is 2,000 tokens;
-the audit ceiling is 3,072 tokens including its 1,024-token thinking target.
+the audit output budget is also 2,000 tokens, with thinking disabled.
 Expiry or reader disconnection aborts the active provider call and returns a generic no-store error;
 an audit that cannot complete never permits the draft. Verify the deployed detailed fixture completes,
 including responses longer than the former 30-second limit, and monitor platform
@@ -60,124 +60,79 @@ Use Vercel's deployment history to restore the previously approved deployment af
 
 ## Independent explanation audit
 
-The verified flow makes at most two model calls: one draft and one source audit,
-with no SDK retries, at most 2,000 draft output tokens and 3,072 audit output
-tokens including a 1,024-token thinking target. A single 55-second budget
-covers request reading, the configured limiter and both calls under the existing
-60-second host allowance. The first call can consume most of this budget; an audit
-that cannot finish is refused. Monitor 422 verification refusals separately from
-provider/deadline 502 failures. No failed or unavailable audit permits a draft.
+The generation model remains controlled by ANTHROPIC_MODEL (Sonnet 4.6 by
+default); the audit is pinned in source to Opus 4.6. Both calls have a 2,000-token
+output ceiling and zero retries. The audit has thinking disabled and returns one
+forced record_audit report, never an executed tool or a follow-up call. A shared
+55-second budget covers all request work within the 60-second host allowance.
+Opus has higher per-token rates; inspect actual latency and usage before release.
+A model migration alone cannot establish better decisions or safe paired timing.
 
-A200 response means the independent model audit passed structural coverage checks;
-it is not a guarantee of factual correctness. Context classifications and semantic
-judgments remain fallible. Exact source/draft identifiers and evidence references
-prevent missing audit rows, not dishonest or mistaken model judgments. The public
-privacy/advice notice still applies. Do not log bodies, drafts, audit reasons or
-keys, and do not add automatic retries for refusals.
+At most 24 source sentence/nonempty-line units are admitted before quota or draft
+work; a normalized draft over 32 units is refused before auditing. The input page
+shows the excerpt limit. These bounds contain per-unit report size; truncation
+can still occur and never permits the draft. Monitor 422 refusals separately from
+provider/deadline 502 failures. Never log source, draft, audit details or keys.
 
-The audit now records one completed `record_audit` tool response containing source
-coverage and a compact evidence-backed check for every draft unit. Reasons are
-reserved for at most six decisive defects, with an exact quoted fragment, with the
-quote limited to 160 characters and reason to 256 characters. The server checks quotes against their
-referenced source/draft units; it does not infer whether a complaint is true.
-Non-operative context may cite reproduced boilerplate or have no references.
-This is a response format only: the application executes no tool and
-makes no follow-up model call. Free-text or fenced JSON, missing/extra/wrong tool
-calls, incomplete output and invalid evidence fail closed. The evaluator uses
-the same request builder, response reader and report validator as the app. A
-complete valid report still requires semantic review; structure cannot establish
-whether its reasons are true. Coverage is collective; each impact needs only its
-own applicable conditions, and equivalent paraphrases are valid. Preserving
-uncertainty is different from asserting a negative causal fact. An inspection or
-approval prerequisite requires source support. The initial cloud prototype wrongly approved all
-three preserved bad answers inside fenced text. Do not deploy by merely removing
-those fences or treating those protocol refusals as accurate rejection.
+The audit must account for every source/draft identifier exactly once with valid
+references. It emits at most six grounded defects, each quote at most 160
+characters and reason at most 256. Quotes may come from referenced source or draft
+regardless of defect category. Missing/contradiction defects identify source
+rules; contradiction/unsupported defects identify draft claims. Positive checks
+remain compact. Any negative, incomplete or malformed audit withholds the draft.
+A 200 means the model and structural checks passed, not a factual guarantee.
+Context classifications and semantic judgments remain fallible.
 
-Before production, run the six fictional audit cases in
-`evals/fixtures/verification-cases.json` using `node --experimental-strip-types
-evals/run-verification.mjs --dry-run` first. A live run requires explicitly approved
-provider usage and the existing server key supplied securely in the process
-environment; never paste or persist it. Use `--output-dir` with a new private
-receipt directory. The harness runs at most six audit calls, no retries, 50 seconds
-and 2,000 output tokens per call. It records actual usage/latency and raw fictional
-audits privately. Truncation or malformed output is a protocol failure, not proof
-of semantic rejection. Inspect each audit against its source and preserved bad
-answer; source-preserving positive controls test false rejection, not prose quality.
-The harness creates a new private output directory and refuses existing paths.
-Individual case receipts are written once; the aggregate is written once after
-all six calls. An interrupted run retains its case receipts and must not be
-automatically repeated to replace missing aggregate evidence.
+Run the unchanged six-case harness only with authorized provider use:
+`node --experimental-strip-types evals/run-verification.mjs --dry-run` first,
+then `--output-dir NEW_PRIVATE_PATH`. Existing paths are refused. Live calls use
+the existing key in process memory, at most six calls, 50 seconds and 2,000 output
+tokens per call with no retries. Preserve raw fictional reports and actual usage.
+Compare every judgment against its source; malformed output is not semantic
+rejection. Accurate controls test false refusals, not simplification quality.
 
-Measure full two-call requests locally or in an authenticated preview before
-production. Do not create protection-bypass tokens or export credentials merely
-to reach a preview. The protected preview requires an existing Vercel sign-in;
-request operator action if unavailable. Complete the reviewed source PR while
-access is pending, retain all failed results and withhold production admission
-until actual feasibility measurements exist.
-
-After admission, repeat all three unchanged fixtures and inspect the real public
-response and desktop/mobile state. A refusal must show the clear error and no
-draft, with no silent fallback. Report each accurate explanation or refusal
-individually. Roll back through a normal revert/restoration of the previous approved
-deployment; no environment, database or protection change is required.
+No release is admitted until all six audit decisions are correct, full paired
+requests fit the deadline and source review/CI pass. After conditional production
+release, repeat the original three requests through the actual public app and
+inspect responses and settled desktop/mobile state. Clear refusals must show no
+draft. No environment, protection, credential or database change is needed.
+Rollback through the prior approved deployment or a normal reviewed source revert.
 
 ## Optional build-only cloud prototype
 
-Use this only with explicit authority for the exact reviewed commit and a fresh
-12-call ceiling. It is an alternative when the existing write-only credentials
-cannot be supplied to a local runtime. Never execute it from default CI or a timer.
+Use only under explicit bounded provider authority for the existing Plainspeak
+project and reviewed source head. Never run from ordinary CI or a timer. Override
+the build command for one build only:
+`pnpm build && node --experimental-strip-types evals/run-build-prototype.mjs
+--vercel-build-only --audits-only`. Use production configuration and
+`--prod --skip-domain`; do not change project build settings or environment values.
+Verify team/project, clean upload, exact source, current alias and cumulative call
+ledger before submission. Identify each job with unique recovery metadata.
 
-In the existing Plainspeak project, override the build command for one test build
-only: `pnpm build && node --experimental-strip-types evals/run-build-prototype.mjs
---vercel-build-only`. Use the production environment so the existing configured
-key/model are injected by Vercel, and disable domain assignment with
-`--prod --skip-domain`. Do not change project settings or environment values.
-Verify the team, project, approved commit, clean upload and current public alias
-before submitting; identify the one job with unique metadata and retain its URL.
+The audits-only phase makes six unchanged audit calls and never invokes the app.
+Inspect all six actual judgments, including the financial exception witnesses,
+and their protocol/usage/timing. Only after manual admission of that exact source
+may a separate test build replace --audits-only with --requests-only. That phase
+makes only three original compiled POST requests, at most two model calls each,
+and never repeats audits. Bind both jobs to the identical source head and keep
+their combined ceiling at 12 calls. Conflicting flags are rejected. The original
+full mode remains available under a separate full 12-call plan, stopping before
+requests if any audit protocol expectation fails.
 
-The runner makes six audit calls through the existing bounded harness and invokes
-the compiled POST handler for the original three requests, at most two calls each.
-It retains all six audits and stops before full requests if any audit protocol
-expectation fails. This is an intentionally incomplete full collection; decode
-with `allowIncomplete` to inspect the preserved batch, without repeating it.
-The limiter is disabled only inside this isolated test process to avoid touching
-shared counters. Neither the key nor other project credentials are exported.
-Synthetic receipts are redacted and split into bounded integrity-checked frames
-in test build logs. Collect authenticated log events, decode their receipt frames
-with `decodeBuildReceipts`, retain the results privately and inspect every answer.
-The default decoder requires the complete record set; explicit `allowIncomplete`
-decoding labels a partial collection as incomplete. A failed audit subprocess
-retains completed individual case receipts as partial evidence. Missing or
-conflicting frames cannot establish a result. Preserve a partial run;
-never resubmit an uncertain job or repeat its calls without new authority.
+Each phase emits started/finished receipts with its six-call ceiling and phase.
+Use decodeBuildReceipts with allowIncomplete for separate phases: auditBatchComplete
+and requestBatchComplete describe their own collection, while collectionComplete
+remains false without a full combined run. Receipt collection is separate from
+semantic acceptance. Require all expected records, exact phase, source identity,
+frame integrity and native job metadata; missing evidence never counts as a pass.
+Preserve partial/failed results and recover uncertain jobs by unique metadata,
+without repeating them or their calls.
 
-The runner exits unsuccessfully even when collection succeeds, intentionally
-preventing publication. The expected Vercel state is ERROR for this test job, not
-READY. Verify that the original public alias still points to its captured baseline.
-
-When only six authorized calls remain, append `--audits-only` to the explicit
-build-only runner invocation. This mode is capped at six audit calls and never
-invokes the application, even if all audits pass. Decode with `allowIncomplete`:
-`auditBatchComplete` records the six-case phase; the full request collection is
-intentionally incomplete. Successful audit-only results do not admit release;
-full two-call app timing/behavior and subsequent consumer proof are still needed.
-A test build is not a release, a model pass or a browser check. Review protocol,
-semantic outcomes, token usage and two-call timings before admitting a normal
-release. Default builds still use the ordinary build command and no live test calls.
-
-The financial-exception repair enables manual thinking on the existing configured
-Sonnet 4.6 through the installed SDK. This mode is currently supported but deprecated
-for that model; revalidate compatibility before changing the configured model.
-Auto tool selection permits reasoning before the compact audit. A thinking block,
-plain-text reply or absent tool call never permits a draft. The application does
-not expose thinking or make additional calls. The larger output allowance can
-increase provider cost and latency; unchanged semantic controls and full paired
-request timings remain release gates. The shared deadline and retry policy stay
-unchanged. To revert this candidate, restore the reviewed source baseline and
-normal build command; never promote an intentionally failed prototype build.
-
-Rejection evidence may quote either cited source or draft, regardless of defect
-category. Quotes still must match exact referenced text. This changes rejection
-reporting only; any issue or negative/incomplete check still prevents publication.
-The smaller thinking target follows a measured 50-second audit timeout, not an
-assumption that shared two-call timing now fits. Re-measure before release.
+The limiter is disabled only in the isolated test process; project counters and
+settings remain intact. Existing credentials stay in Vercel. Synthetic receipts
+are redacted into bounded integrity-checked build-log frames and retained
+privately. The runner always exits unsuccessfully to prevent publication. The
+expected native state is ERROR and alias assignment false, even when a phase
+collects successfully. Verify the public alias still points to its captured
+baseline. Never promote or blindly redeploy a test job. Ordinary builds use the
+normal build command and make no live evaluation calls.

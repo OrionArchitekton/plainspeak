@@ -7,17 +7,20 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
-export async function collectBuildPrototype({ audit, post, requests, emit, auditsOnly = false }) {
+export async function collectBuildPrototype({ audit, post, requests, emit, auditsOnly = false, requestsOnly = false }) {
   let collectionComplete = false;
   let auditBatchComplete = false;
+  let requestBatchComplete = false;
   try {
-    if (requests.length !== 3) throw new Error('Unexpected fixture count');
-    const audits = await audit();
-    if (!Array.isArray(audits) || audits.length !== 6) throw new Error('Incomplete audit batch');
-    auditBatchComplete = true;
-    emit('audits', audits);
-    if (audits.some(result => result?.metProtocolExpectation !== true)) throw new Error('Audit prerequisite failed');
-    if (auditsOnly) return;
+    if (requests.length !== 3 || (auditsOnly && requestsOnly)) throw new Error('Invalid prototype phase or fixture count');
+    if (!requestsOnly) {
+      const audits = await audit();
+      if (!Array.isArray(audits) || audits.length !== 6) throw new Error('Incomplete audit batch');
+      auditBatchComplete = true;
+      emit('audits', audits);
+      if (audits.some(result => result?.metProtocolExpectation !== true)) throw new Error('Audit prerequisite failed');
+      if (auditsOnly) return;
+    }
     for (const { name, request } of requests) {
       const start = performance.now();
       let result;
@@ -27,10 +30,11 @@ export async function collectBuildPrototype({ audit, post, requests, emit, audit
       } catch { result = { request, error: 'Request failed; no retry attempted' }; }
       emit('request-' + name, { ...result, elapsedMs: Math.round(performance.now() - start) });
     }
-    collectionComplete = true;
+    requestBatchComplete = true;
+    collectionComplete = !requestsOnly;
   } catch { emit('error', { error: 'Prototype collection failed; no retry attempted' }); }
   finally {
-    emit('finished', { collectionComplete, auditBatchComplete, requestedPhase: auditsOnly ? 'audits-only' : 'full', providerCallCeiling: auditsOnly ? 6 : 12, semanticReviewRequired: true });
+    emit('finished', { collectionComplete, auditBatchComplete, requestBatchComplete, requestedPhase: auditsOnly ? 'audits-only' : requestsOnly ? 'requests-only' : 'full', providerCallCeiling: (auditsOnly || requestsOnly) ? 6 : 12, semanticReviewRequired: true });
     throw new Error('Prototype publication stopped intentionally');
   }
 }
@@ -104,7 +108,8 @@ export async function readBuildAudits(output, emit) {
 async function main() {
   const args = process.argv.slice(2).join(' ');
   const auditsOnly = args === '--vercel-build-only --audits-only';
-  if ((!auditsOnly && args !== '--vercel-build-only') || process.env.VERCEL_ENV !== 'production' || !process.env.ANTHROPIC_API_KEY) {
+  const requestsOnly = args === '--vercel-build-only --requests-only';
+  if ((!auditsOnly && !requestsOnly && args !== '--vercel-build-only') || process.env.VERCEL_ENV !== 'production' || !process.env.ANTHROPIC_API_KEY) {
     throw new Error('Explicit production-configured test build required');
   }
   // These affect this isolated test process only, never project settings.
@@ -112,7 +117,7 @@ async function main() {
   const emit = (name, value) => {
     for (const line of encodeBuildReceipt(name, value, process.env.ANTHROPIC_API_KEY)) console.log(line);
   };
-  emit('started', { providerCallCeiling: auditsOnly ? 6 : 12, requestedPhase: auditsOnly ? 'audits-only' : 'full', sourceSha: process.env.VERCEL_GIT_COMMIT_SHA || null, publication: 'blocked' });
+  emit('started', { providerCallCeiling: (auditsOnly || requestsOnly) ? 6 : 12, requestedPhase: auditsOnly ? 'audits-only' : requestsOnly ? 'requests-only' : 'full', sourceSha: process.env.VERCEL_GIT_COMMIT_SHA || null, publication: 'blocked' });
   const require = createRequire(import.meta.url);
   const post = require(resolve('.next/server/app/api/explain/route.js')).routeModule?.userland?.POST;
   if (typeof post !== 'function') throw new Error('Compiled POST handler unavailable');
@@ -123,7 +128,7 @@ async function main() {
   }
   const folder = await mkdtemp(join(tmpdir(), 'plainspeak-build-prototype-'));
   await collectBuildPrototype({
-    requests, emit, auditsOnly,
+    requests, emit, auditsOnly, requestsOnly,
     audit: async () => {
       const output = join(folder, 'audits');
       await new Promise(resolveDone => {
