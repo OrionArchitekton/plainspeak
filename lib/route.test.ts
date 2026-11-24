@@ -480,4 +480,41 @@ describe("explanation privacy boundary", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(create).not.toHaveBeenCalled();
   });
+  it("retries once when draft contains banned long dashes and admits clean rewrite", async () => {
+    create
+      .mockResolvedValueOnce({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({
+        plain: "You have 1\u20133 days\u2014unless waived\u2014to cancel.",
+        affects_you: [{ point: "Notice rules apply.", severity: "high" }],
+        questions: ["When is notice due?", "How do I send it?", "What fees apply?"],
+      }) }] })
+      .mockResolvedValueOnce({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({
+        plain: "You have 1 to 3 days (unless waived) to cancel.",
+        affects_you: [{ point: "Notice rules apply.", severity: "high" }],
+        questions: ["When is notice due?", "How do I send it?", "What fees apply?"],
+      }) }] });
+    const response = await POST(request({ document: "Cancel within 1-3 days unless waived." }));
+    expect(response.status).toBe(200);
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create.mock.calls[1][0].messages[2].content).toContain("plain");
+    expect(audit).toHaveBeenCalledTimes(1);
+    const body = await response.json();
+    expect(body.plain).toBe("You have 1 to 3 days (unless waived) to cancel.");
+    expect(body.plain).not.toContain(" - ");
+  });
+  it("fails closed without auditing when bounded retry retains banned long dashes", async () => {
+    const poisoned = JSON.stringify({
+      plain: "Cancel\u2014before Friday.",
+      affects_you: [{ point: "Deadline applies.", severity: "high" }],
+      questions: ["When is Friday?", "How do I cancel?", "Who confirms it?"],
+    });
+    create
+      .mockResolvedValueOnce({ stop_reason: "end_turn", content: [{ type: "text", text: poisoned }] })
+      .mockResolvedValueOnce({ stop_reason: "end_turn", content: [{ type: "text", text: poisoned }] });
+    const response = await POST(request({ document: "Cancel before Friday." }));
+    expect(response.status).toBe(422);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(audit).not.toHaveBeenCalled();
+    expect(await response.text()).not.toContain("Friday");
+  });
 });

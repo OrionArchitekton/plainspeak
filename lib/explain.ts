@@ -52,6 +52,7 @@ export function buildSystemPrompt(req: ExplainRequest): string {
     "Preserve material exceptions, conditions and exclusions whenever you explain a rule; simplification must not remove a qualifier that changes its meaning.",
     "Keep each qualifier in the same explanation sentence or affects_you point as the rule it limits. For liability caps, state both the cap and any exceptions together; do not describe an unconditional maximum where the document provides an exception.",
     "Before returning JSON, check each summarized rule against its source clause and restore omitted qualifiers. Mentioning an exception only in a question is not enough.",
+    "Never use em dashes, en dashes, or horizontal bars (U+2013, U+2014, U+2015) anywhere in your output. Structure parenthetical or appositive clauses with commas, parentheses, colons, or periods, and write numeric ranges with 'to' (for example, '1 to 3 days').",
     "You are not a lawyer or doctor and must not present this as professional advice.",
     "",
     "Respond with ONLY a JSON object, no prose before or after, in exactly this shape:",
@@ -69,6 +70,19 @@ export function buildUserPrompt(req: ExplainRequest): string {
 }
 
 const VALID_SEVERITY: Severity[] = ["high", "medium", "low"];
+export const LONG_DASH_RE = /[\u2013\u2014\u2015]/;
+
+export function findLongDashFields(explanation: Explanation): string[] {
+  const hits: string[] = [];
+  if (LONG_DASH_RE.test(explanation.plain)) hits.push("plain");
+  explanation.affectsYou.forEach((item, index) => {
+    if (LONG_DASH_RE.test(item.point)) hits.push(`affects_you[${index}]`);
+  });
+  explanation.questions.forEach((question, index) => {
+    if (LONG_DASH_RE.test(question)) hits.push(`questions[${index}]`);
+  });
+  return hits;
+}
 
 /**
  * Pull a JSON object out of a model reply that may be wrapped in code fences or

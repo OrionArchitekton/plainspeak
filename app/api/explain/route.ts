@@ -5,8 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   buildSystemPrompt,
   buildUserPrompt,
+  findLongDashFields,
   parseExplanation,
   type ExplainRequest,
+  type Explanation,
   type ReadingLevel,
 } from "@/lib/explain";
 import { MAX_SOURCE_UNITS, MAX_DRAFT_UNITS, sourceUnitCount, auditAllowsDraft, buildVerificationRequest, verificationInput, verificationReport } from "@/lib/verification";
@@ -108,6 +110,79 @@ export async function POST(req: NextRequest) {
   }
 }
 
+class LongDashViolationError extends Error {}
+
+function parseValidExplanation(raw: string): Explanation {
+  const explanation = parseExplanation(raw);
+  if (!explanation.plain || explanation.affectsYou.length === 0 ||
+      explanation.questions.length < 3 || explanation.questions.length > 5) {
+    throw new Error("Incomplete explanation");
+  }
+  return explanation;
+}
+
+async function callDraftModel(
+  client: Anthropic,
+  system: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  signal: AbortSignal,
+): Promise<string> {
+  const msg = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2000,
+    temperature: 0,
+    system,
+    messages,
+  }, { signal });
+  if (msg.stop_reason !== "end_turn") throw new Error("Incomplete draft generation");
+  return msg.content
+    .filter((b) => b.type === "text")
+    .map((b) => (b as { text: string }).text)
+    .join("\n");
+}
+
+async function requestCleanExplanation(
+  client: Anthropic,
+  request: ExplainRequest,
+  signal: AbortSignal,
+): Promise<Explanation> {
+  const system = buildSystemPrompt(request);
+  const userContent = buildUserPrompt(request);
+  const firstRaw = await callDraftModel(
+    client,
+    system,
+    [{ role: "user", content: userContent }],
+    signal,
+  );
+  let explanation = parseValidExplanation(firstRaw);
+
+  const dashFields = findLongDashFields(explanation);
+  if (dashFields.length > 0) {
+    signal.throwIfAborted();
+    const repairPrompt = [
+      `Your previous JSON used banned long dashes (em/en dashes or horizontal bars) in ${dashFields.join(", ")}.`,
+      "Rewrite those clauses cleanly using commas, parentheses, colons, periods, or 'to' for numeric ranges,",
+      "keeping zero U+2013, U+2014, or U+2015 characters anywhere while preserving every rule and qualifier.",
+      "Return ONLY the corrected JSON object.",
+    ].join(" ");
+    const repairedRaw = await callDraftModel(
+      client,
+      system,
+      [
+        { role: "user", content: userContent },
+        { role: "assistant", content: firstRaw },
+        { role: "user", content: repairPrompt },
+      ],
+      signal,
+    );
+    explanation = parseValidExplanation(repairedRaw);
+    if (findLongDashFields(explanation).length > 0) {
+      throw new LongDashViolationError("Explanation retained banned long dashes after repair");
+    }
+  }
+  return explanation;
+}
+
 async function explain(req: NextRequest, signal: AbortSignal) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -198,25 +273,7 @@ async function explain(req: NextRequest, signal: AbortSignal) {
 
   try {
     signal.throwIfAborted();
-    const msg = await client.messages.create({
-      model: MODEL,
-      max_tokens: 2000,
-      temperature: 0,
-      system: buildSystemPrompt(request),
-      messages: [{ role: "user", content: buildUserPrompt(request) }],
-    }, { signal });
-
-    if (msg.stop_reason !== "end_turn") throw new Error("Incomplete draft generation");
-    const text = msg.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { text: string }).text)
-      .join("\n");
-
-    const explanation = parseExplanation(text);
-    if (!explanation.plain || explanation.affectsYou.length === 0 ||
-        explanation.questions.length < 3 || explanation.questions.length > 5) {
-      throw new Error("Incomplete explanation");
-    }
+    const explanation = await requestCleanExplanation(client, request, signal);
     const input = verificationInput(request, explanation);
     if (input.draftUnits.length > MAX_DRAFT_UNITS) {
       return respond({ error: "Could not verify this explanation. Please try a shorter excerpt." }, { status: 422 });
@@ -234,7 +291,13 @@ async function explain(req: NextRequest, signal: AbortSignal) {
       res.headers.set("X-RateLimit-Remaining", String(rlRemaining));
     }
     return res;
-  } catch {
+  } catch (err) {
+    if (err instanceof LongDashViolationError) {
+      return respond(
+        { error: "Could not generate an explanation without banned long dashes. Please try again." },
+        { status: 422 },
+      );
+    }
     return respond(
       { error: "Could not generate an explanation. Please try again later." },
       { status: 502 },
