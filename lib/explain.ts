@@ -69,6 +69,11 @@ export function buildUserPrompt(req: ExplainRequest): string {
 }
 
 const VALID_SEVERITY: Severity[] = ["high", "medium", "low"];
+const LONG_DASH_RE = /\s*[\u2013\u2014\u2015]+\s*/g;
+
+function normalizePlainText(text: string): string {
+  return text.replace(LONG_DASH_RE, " - ").trim();
+}
 
 /**
  * Pull a JSON object out of a model reply that may be wrapped in code fences or
@@ -92,14 +97,14 @@ export function parseExplanation(raw: string): Explanation {
 
   const record = obj as Record<string, unknown>;
 
-  const plain = typeof record.plain === "string" ? record.plain.trim() : "";
+  const plain = typeof record.plain === "string" ? normalizePlainText(record.plain) : "";
 
   const affectsYou: AffectsYouItem[] = Array.isArray(record.affects_you)
     ? record.affects_you
         .map((item): AffectsYouItem | null => {
           if (item && typeof item === "object") {
             const r = item as Record<string, unknown>;
-            const point = typeof r.point === "string" ? r.point.trim() : "";
+            const point = typeof r.point === "string" ? normalizePlainText(r.point) : "";
             if (!point) return null;
             const sev = VALID_SEVERITY.includes(r.severity as Severity)
               ? (r.severity as Severity)
@@ -107,7 +112,7 @@ export function parseExplanation(raw: string): Explanation {
             return { point, severity: sev };
           }
           if (typeof item === "string" && item.trim()) {
-            return { point: item.trim(), severity: "medium" };
+            return { point: normalizePlainText(item), severity: "medium" };
           }
           return null;
         })
@@ -116,7 +121,7 @@ export function parseExplanation(raw: string): Explanation {
 
   const questions: string[] = Array.isArray(record.questions)
     ? record.questions
-        .map((q) => (typeof q === "string" ? q.trim() : ""))
+        .map((q) => (typeof q === "string" ? normalizePlainText(q) : ""))
         .filter((q) => q.length > 0)
     : [];
 

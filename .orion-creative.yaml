@@ -1,0 +1,9 @@
+kit_version: "0.1.0"
+repo: plainspeak
+voice_profile: plainspeak
+public_repo: true
+long_dashes_allowed: false
+notes: >
+  Pinned to orion-creative-kit v0.1.0 coverage contract. Public plain-English
+  output normalization and layout hygiene enforced in lib/explain.ts and
+  lib/creative-brand.test.ts.
