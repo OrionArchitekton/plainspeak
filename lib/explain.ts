@@ -69,10 +69,16 @@ export function buildUserPrompt(req: ExplainRequest): string {
 }
 
 const VALID_SEVERITY: Severity[] = ["high", "medium", "low"];
-const LONG_DASH_RE = /\s*[\u2013\u2014\u2015]+\s*/g;
+const LINE_START_DASH_RE = /(^|\n)[ \t]*[\u2013\u2014\u2015]+[ \t]*/g;
+const NUMERIC_RANGE_DASH_RE = /(?<=\d)[ \t]*[\u2013\u2014\u2015]+[ \t]*(?=\d)/g;
+const LONG_DASH_RE = /[ \t]*[\u2013\u2014\u2015]+[ \t]*/g;
 
 function normalizePlainText(text: string): string {
-  return text.replace(LONG_DASH_RE, " - ").trim();
+  return text
+    .replace(LINE_START_DASH_RE, "$1- ")
+    .replace(NUMERIC_RANGE_DASH_RE, " to ")
+    .replace(LONG_DASH_RE, " - ")
+    .trim();
 }
 
 /**

@@ -34,11 +34,14 @@ describe("Plainspeak creative-kit compliance (EXT-BRAND-002)", () => {
   it("normalizes long dashes out of parsed plain-English explanations", () => {
     const parsed = parseExplanation(
       JSON.stringify({
-        plain: "You have 14 days\u2014unless waived\u2013to cancel.",
+        plain: "Line one\n\u2014 item two.\nYou have 1\u20133 days\u2014unless waived\u2014to cancel.",
         affects_you: [{ point: "Fee applies \u2014 see clause 3", severity: "high" }],
-        questions: ["Is the notice window 14 days\u2014calendar or business?"],
+        questions: ["Is the notice window 1\u20133 days\u2014calendar or business?"],
       }),
     );
+    expect(parsed.plain).toBe("Line one\n- item two.\nYou have 1 to 3 days - unless waived - to cancel.");
+    expect(parsed.affectsYou).toEqual([{ point: "Fee applies - see clause 3", severity: "high" }]);
+    expect(parsed.questions).toEqual(["Is the notice window 1 to 3 days - calendar or business?"]);
     expect(LONG_DASH.test(parsed.plain)).toBe(false);
     expect(LONG_DASH.test(parsed.affectsYou[0].point)).toBe(false);
     expect(LONG_DASH.test(parsed.questions[0])).toBe(false);
