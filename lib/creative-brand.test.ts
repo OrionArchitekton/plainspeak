@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseExplanation } from "./explain";
+import { buildSystemPrompt, findLongDashFields, parseExplanation } from "./explain";
 
 const LONG_DASH = /[\u2013\u2014\u2015]/;
 
@@ -31,19 +31,20 @@ describe("Plainspeak creative-kit compliance (EXT-BRAND-002)", () => {
     expect(offending).toEqual([]);
   });
 
-  it("normalizes long dashes out of parsed plain-English explanations", () => {
+  it("instructs zero long dashes in system prompt and detects them without silent scrubbing", () => {
+    const prompt = buildSystemPrompt({ document: "Lease renewal notice.", readingLevel: "plain" });
+    expect(prompt).toContain("U+2013, U+2014, U+2015");
+    expect(prompt).toContain("commas, parentheses, colons, or periods");
+
+    const rawPlain = "You have 1\u20133 days\u2014unless waived\u2014to cancel.";
     const parsed = parseExplanation(
       JSON.stringify({
-        plain: "Line one\n\u2014 item two.\nYou have 1\u20133 days\u2014unless waived\u2014to cancel.",
+        plain: rawPlain,
         affects_you: [{ point: "Fee applies \u2014 see clause 3", severity: "high" }],
         questions: ["Is the notice window 1\u20133 days\u2014calendar or business?"],
       }),
     );
-    expect(parsed.plain).toBe("Line one\n- item two.\nYou have 1 to 3 days - unless waived - to cancel.");
-    expect(parsed.affectsYou).toEqual([{ point: "Fee applies - see clause 3", severity: "high" }]);
-    expect(parsed.questions).toEqual(["Is the notice window 1 to 3 days - calendar or business?"]);
-    expect(LONG_DASH.test(parsed.plain)).toBe(false);
-    expect(LONG_DASH.test(parsed.affectsYou[0].point)).toBe(false);
-    expect(LONG_DASH.test(parsed.questions[0])).toBe(false);
+    expect(parsed.plain).toBe(rawPlain);
+    expect(findLongDashFields(parsed)).toEqual(["plain", "affects_you[0]", "questions[0]"]);
   });
 });

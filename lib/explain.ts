@@ -52,6 +52,7 @@ export function buildSystemPrompt(req: ExplainRequest): string {
     "Preserve material exceptions, conditions and exclusions whenever you explain a rule; simplification must not remove a qualifier that changes its meaning.",
     "Keep each qualifier in the same explanation sentence or affects_you point as the rule it limits. For liability caps, state both the cap and any exceptions together; do not describe an unconditional maximum where the document provides an exception.",
     "Before returning JSON, check each summarized rule against its source clause and restore omitted qualifiers. Mentioning an exception only in a question is not enough.",
+    "Never use em dashes, en dashes, or horizontal bars (U+2013, U+2014, U+2015) anywhere in your output. Structure parenthetical or appositive clauses with commas, parentheses, colons, or periods, and write numeric ranges with 'to' (for example, '1 to 3 days').",
     "You are not a lawyer or doctor and must not present this as professional advice.",
     "",
     "Respond with ONLY a JSON object, no prose before or after, in exactly this shape:",
@@ -69,16 +70,18 @@ export function buildUserPrompt(req: ExplainRequest): string {
 }
 
 const VALID_SEVERITY: Severity[] = ["high", "medium", "low"];
-const LINE_START_DASH_RE = /(^|\n)[ \t]*[\u2013\u2014\u2015]+[ \t]*/g;
-const NUMERIC_RANGE_DASH_RE = /(?<=\d)[ \t]*[\u2013\u2014\u2015]+[ \t]*(?=\d)/g;
-const LONG_DASH_RE = /[ \t]*[\u2013\u2014\u2015]+[ \t]*/g;
+export const LONG_DASH_RE = /[\u2013\u2014\u2015]/;
 
-function normalizePlainText(text: string): string {
-  return text
-    .replace(LINE_START_DASH_RE, "$1- ")
-    .replace(NUMERIC_RANGE_DASH_RE, " to ")
-    .replace(LONG_DASH_RE, " - ")
-    .trim();
+export function findLongDashFields(explanation: Explanation): string[] {
+  const hits: string[] = [];
+  if (LONG_DASH_RE.test(explanation.plain)) hits.push("plain");
+  explanation.affectsYou.forEach((item, index) => {
+    if (LONG_DASH_RE.test(item.point)) hits.push(`affects_you[${index}]`);
+  });
+  explanation.questions.forEach((question, index) => {
+    if (LONG_DASH_RE.test(question)) hits.push(`questions[${index}]`);
+  });
+  return hits;
 }
 
 /**
@@ -103,14 +106,14 @@ export function parseExplanation(raw: string): Explanation {
 
   const record = obj as Record<string, unknown>;
 
-  const plain = typeof record.plain === "string" ? normalizePlainText(record.plain) : "";
+  const plain = typeof record.plain === "string" ? record.plain.trim() : "";
 
   const affectsYou: AffectsYouItem[] = Array.isArray(record.affects_you)
     ? record.affects_you
         .map((item): AffectsYouItem | null => {
           if (item && typeof item === "object") {
             const r = item as Record<string, unknown>;
-            const point = typeof r.point === "string" ? normalizePlainText(r.point) : "";
+            const point = typeof r.point === "string" ? r.point.trim() : "";
             if (!point) return null;
             const sev = VALID_SEVERITY.includes(r.severity as Severity)
               ? (r.severity as Severity)
@@ -118,7 +121,7 @@ export function parseExplanation(raw: string): Explanation {
             return { point, severity: sev };
           }
           if (typeof item === "string" && item.trim()) {
-            return { point: normalizePlainText(item), severity: "medium" };
+            return { point: item.trim(), severity: "medium" };
           }
           return null;
         })
@@ -127,7 +130,7 @@ export function parseExplanation(raw: string): Explanation {
 
   const questions: string[] = Array.isArray(record.questions)
     ? record.questions
-        .map((q) => (typeof q === "string" ? normalizePlainText(q) : ""))
+        .map((q) => (typeof q === "string" ? q.trim() : ""))
         .filter((q) => q.length > 0)
     : [];
 
